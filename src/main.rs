@@ -1,4 +1,5 @@
 mod narrative;
+mod output;
 mod security;
 
 fn main() {

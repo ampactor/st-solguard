@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolGuard — Ecosystem Intelligence Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        solana: { purple: '#9945FF', green: '#14F195' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .gradient-text {
+            background: linear-gradient(135deg, #9945FF, #14F195);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+    <header class="border-b border-gray-800 px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold gradient-text">SolGuard</h1>
+                <p class="text-gray-400 text-sm">Autonomous Solana Ecosystem Intelligence</p>
+            </div>
+            <div class="text-right text-sm text-gray-500">
+                <p>Generated: {{ generated_at }}</p>
+                <p>{{ narrative_count }} narratives | {{ finding_count }} security findings</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8 space-y-12">
+        <!-- Stats -->
+        <div class="grid grid-cols-2 gap-4">
+            <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                <p class="text-3xl font-bold text-solana-green">{{ narrative_count }}</p>
+                <p class="text-gray-400 text-sm">Emerging Narratives</p>
+            </div>
+            <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                <p class="text-3xl font-bold text-red-400">{{ finding_count }}</p>
+                <p class="text-gray-400 text-sm">Security Findings</p>
+            </div>
+        </div>
+
+        <!-- Cross-reference insight -->
+        {% if narrative_count > 0 && finding_count > 0 %}
+        <div class="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
+            <h3 class="text-yellow-400 font-semibold mb-2">Ecosystem Risk Alert</h3>
+            <p class="text-gray-300 text-sm">Growing narratives have active repos with security vulnerabilities. See details below.</p>
+        </div>
+        {% endif %}
+
+        <!-- Narratives -->
+        <section>
+            <h2 class="text-xl font-bold mb-6 text-gray-200">Emerging Narratives</h2>
+            {% if narratives.is_empty() %}
+            <p class="text-gray-500">No narratives detected yet. Run with live API keys to populate.</p>
+            {% else %}
+            <div class="space-y-4">
+                {% for n in narratives %}
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">{{ n.title }}</h3>
+                        <span class="text-sm text-gray-400">{{ n.confidence_pct }}% confidence</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">{{ n.summary }}</p>
+                    <div class="mt-2 flex gap-2">
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.trend }}</span>
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.repo_count }} repos</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Security Findings -->
+        <section>
+            <h2 class="text-xl font-bold mb-6 text-gray-200">Security Findings</h2>
+            {% if findings.is_empty() %}
+            <p class="text-gray-500">No findings yet. Run scanner against target repos.</p>
+            {% else %}
+            <div class="space-y-4">
+                {% for f in findings %}
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">{{ f.title }}</h3>
+                        <span class="text-sm font-medium {{ f.severity_class }}">{{ f.severity }}</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">{{ f.description }}</p>
+                    <div class="mt-2 text-xs text-gray-500">{{ f.file_path }}</div>
+                    <div class="mt-2 text-sm text-gray-300"><span class="text-gray-500">Fix:</span> {{ f.remediation }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer class="border-t border-gray-800 px-6 py-4 mt-12">
+        <div class="max-w-6xl mx-auto text-center text-gray-600 text-sm">
+            <p>Generated by <span class="gradient-text font-semibold">SolGuard</span> — autonomous Solana ecosystem intelligence</p>
+            <p class="mt-1">Combines narrative detection + security scanning for comprehensive ecosystem analysis</p>
+        </div>
+    </footer>
+</body>
+</html>
