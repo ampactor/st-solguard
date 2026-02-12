@@ -90,6 +90,21 @@ enum Command {
         /// Path to the repository
         repo_path: PathBuf,
     },
+
+    /// Render a report from pre-computed analysis files (no LLM calls)
+    Render {
+        /// Path to narratives JSON file
+        #[arg(long)]
+        narratives: PathBuf,
+
+        /// Path to security findings JSON file
+        #[arg(long)]
+        findings: PathBuf,
+
+        /// Output path for the combined HTML report
+        #[arg(short, long, default_value = "solguard-report.html")]
+        output: PathBuf,
+    },
 }
 
 #[tokio::main]
@@ -135,5 +150,35 @@ async fn main() -> Result<()> {
             println!("{json}");
             Ok(())
         }
+        Command::Render {
+            narratives,
+            findings,
+            output,
+        } => render_from_files(narratives, findings, output),
     }
+}
+
+fn render_from_files(
+    narratives_path: PathBuf,
+    findings_path: PathBuf,
+    output_path: PathBuf,
+) -> Result<()> {
+    let narratives: Vec<narrative::Narrative> =
+        serde_json::from_str(&std::fs::read_to_string(&narratives_path)?)?;
+    let findings: Vec<security::SecurityFinding> =
+        serde_json::from_str(&std::fs::read_to_string(&findings_path)?)?;
+
+    let html = output::render_combined_report(&narratives, &findings)?;
+    if let Some(parent) = output_path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
+    std::fs::write(&output_path, &html)?;
+
+    println!(
+        "Report rendered: {} ({} narratives, {} findings)",
+        output_path.display(),
+        narratives.len(),
+        findings.len()
+    );
+    Ok(())
 }
