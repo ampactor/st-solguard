@@ -1,6 +1,10 @@
+pub mod agent_review;
+pub mod agent_tools;
 mod ast_scan;
 mod regex_scan;
 
+use crate::config::AgentReviewConfig;
+use crate::llm::LlmClient;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -138,6 +142,69 @@ pub async fn scan_repo(repo_path: &Path) -> Result<Vec<SecurityFinding>> {
         .collect();
 
     info!(count = findings.len(), "security scan complete");
+    Ok(findings)
+}
+
+/// Run the multi-turn agent investigation on a repository.
+///
+/// Optionally runs the static scanner first to provide triage context.
+pub async fn scan_repo_deep(
+    repo_path: &Path,
+    llm: &LlmClient,
+    config: &AgentReviewConfig,
+) -> Result<Vec<SecurityFinding>> {
+    // Run static scan first for triage context
+    let static_findings = scan_repo(repo_path).await.unwrap_or_default();
+    let triage = if static_findings.is_empty() {
+        None
+    } else {
+        Some(agent_review::format_triage_context(&static_findings))
+    };
+
+    let (agent_findings, stats) =
+        agent_review::investigate(llm, repo_path, config, triage.as_deref()).await?;
+
+    info!(
+        agent_findings = agent_findings.len(),
+        static_findings = static_findings.len(),
+        turns = stats.turns,
+        cost = format!("${:.4}", stats.total_cost_usd),
+        "deep scan complete"
+    );
+
+    // Convert agent findings to SecurityFinding
+    let mut findings: Vec<SecurityFinding> = agent_findings
+        .into_iter()
+        .map(|af| SecurityFinding {
+            title: af.title,
+            severity: af.severity,
+            description: af.description,
+            file_path: af
+                .affected_files
+                .first()
+                .map(PathBuf::from)
+                .unwrap_or_default(),
+            line_number: 0,
+            remediation: af.remediation,
+        })
+        .collect();
+
+    // Include high-confidence static findings not covered by agent
+    for sf in static_findings {
+        if sf.severity == "Critical" || sf.severity == "High" {
+            let dominated = findings.iter().any(|af| {
+                af.title.to_lowercase().contains(&sf.title.to_lowercase())
+                    || sf
+                        .file_path
+                        .to_string_lossy()
+                        .contains(&af.file_path.to_string_lossy().to_string())
+            });
+            if !dominated {
+                findings.push(sf);
+            }
+        }
+    }
+
     Ok(findings)
 }
 

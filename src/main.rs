@@ -17,6 +17,27 @@ pub struct LlmOverride {
     pub model: String,
 }
 
+/// Build an LlmClient from config + optional CLI override.
+fn build_llm_client(
+    llm_config: &config::LlmConfig,
+    llm_override: Option<&LlmOverride>,
+) -> Result<llm::LlmClient> {
+    let provider = llm_override
+        .map(|o| o.provider.clone())
+        .unwrap_or_else(|| llm_config.provider.clone());
+    let model = llm_override
+        .map(|o| o.model.clone())
+        .unwrap_or_else(|| llm_config.model.clone());
+    let client = llm::LlmClient::from_config(
+        provider,
+        model,
+        llm_config.max_tokens,
+        llm_config.api_key_env.clone(),
+        llm_config.base_url.clone(),
+    )?;
+    Ok(client)
+}
+
 fn make_llm_override(provider: Option<String>, model: Option<String>) -> Option<LlmOverride> {
     if provider.is_none() && model.is_none() {
         return None;
@@ -68,6 +89,10 @@ enum Command {
         /// LLM model override
         #[arg(long)]
         model: Option<String>,
+
+        /// Use multi-turn agent investigation instead of static-only scanning
+        #[arg(long)]
+        deep: bool,
     },
 
     /// Run narrative detection only
@@ -89,6 +114,48 @@ enum Command {
     Scan {
         /// Path to the repository
         repo_path: PathBuf,
+
+        /// Use multi-turn agent investigation (LLM-powered deep review)
+        #[arg(long)]
+        deep: bool,
+
+        /// LLM provider override: anthropic, openrouter, openai
+        #[arg(long)]
+        provider: Option<String>,
+
+        /// LLM model override
+        #[arg(long)]
+        model: Option<String>,
+
+        /// Path to config file (for agent_review settings)
+        #[arg(short, long, default_value = "config.toml")]
+        config: PathBuf,
+    },
+
+    /// Investigate a repo with the multi-turn security agent (deep review only)
+    Investigate {
+        /// Path to the repository
+        repo_path: PathBuf,
+
+        /// LLM provider override: anthropic, openrouter, openai
+        #[arg(long)]
+        provider: Option<String>,
+
+        /// LLM model override
+        #[arg(long)]
+        model: Option<String>,
+
+        /// Maximum conversation turns
+        #[arg(long)]
+        max_turns: Option<u32>,
+
+        /// Maximum cost in USD
+        #[arg(long)]
+        cost_limit: Option<f64>,
+
+        /// Path to config file
+        #[arg(short, long, default_value = "config.toml")]
+        config: PathBuf,
     },
 
     /// Render a report from pre-computed analysis files (no LLM calls)
@@ -128,9 +195,10 @@ async fn main() -> Result<()> {
             repos_dir,
             provider,
             model,
+            deep,
         } => {
             let llm_override = make_llm_override(provider, model);
-            agent::run_full_pipeline(config, output, repos_dir, llm_override).await
+            agent::run_full_pipeline(config, output, repos_dir, llm_override, deep).await
         }
         Command::Narratives {
             config,
@@ -144,8 +212,47 @@ async fn main() -> Result<()> {
             println!("{json}");
             Ok(())
         }
-        Command::Scan { repo_path } => {
-            let findings = security::scan_repo(&repo_path).await?;
+        Command::Scan {
+            repo_path,
+            deep,
+            provider,
+            model,
+            config,
+        } => {
+            if deep {
+                let cfg = config::Config::load(&config).unwrap_or_default();
+                let llm_override = make_llm_override(provider, model);
+                let llm = build_llm_client(&cfg.llm, llm_override.as_ref())?;
+                let findings =
+                    security::scan_repo_deep(&repo_path, &llm, &cfg.agent_review).await?;
+                let json = serde_json::to_string_pretty(&findings)?;
+                println!("{json}");
+            } else {
+                let findings = security::scan_repo(&repo_path).await?;
+                let json = serde_json::to_string_pretty(&findings)?;
+                println!("{json}");
+            }
+            Ok(())
+        }
+        Command::Investigate {
+            repo_path,
+            provider,
+            model,
+            max_turns,
+            cost_limit,
+            config,
+        } => {
+            let cfg = config::Config::load(&config).unwrap_or_default();
+            let llm_override = make_llm_override(provider, model);
+            let llm = build_llm_client(&cfg.llm, llm_override.as_ref())?;
+            let mut agent_config = cfg.agent_review;
+            if let Some(turns) = max_turns {
+                agent_config.max_turns = turns;
+            }
+            if let Some(limit) = cost_limit {
+                agent_config.cost_limit_usd = limit;
+            }
+            let findings = security::scan_repo_deep(&repo_path, &llm, &agent_config).await?;
             let json = serde_json::to_string_pretty(&findings)?;
             println!("{json}");
             Ok(())

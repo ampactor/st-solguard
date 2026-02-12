@@ -11,6 +11,31 @@ pub struct Config {
     #[serde(default)]
     pub defi_llama: DefiLlamaConfig,
     pub llm: LlmConfig,
+    #[serde(default)]
+    pub agent_review: AgentReviewConfig,
+}
+
+/// Configuration for the multi-turn agent security review.
+#[derive(Debug, Deserialize)]
+pub struct AgentReviewConfig {
+    #[serde(default = "default_max_turns")]
+    pub max_turns: u32,
+    /// Max tokens per LLM response (reserved for verifier agent in Phase 2).
+    #[serde(default = "default_agent_max_tokens")]
+    #[allow(dead_code)]
+    pub max_tokens: u32,
+    #[serde(default = "default_cost_limit")]
+    pub cost_limit_usd: f64,
+}
+
+impl Default for AgentReviewConfig {
+    fn default() -> Self {
+        Self {
+            max_turns: default_max_turns(),
+            max_tokens: default_agent_max_tokens(),
+            cost_limit_usd: default_cost_limit(),
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -153,6 +178,43 @@ fn default_model() -> String {
 }
 fn default_max_tokens() -> u32 {
     4096
+}
+fn default_max_turns() -> u32 {
+    30
+}
+fn default_agent_max_tokens() -> u32 {
+    8192
+}
+fn default_cost_limit() -> f64 {
+    20.0
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            github: GitHubConfig {
+                token: default_github_token(),
+                topics: default_topics(),
+                min_stars: default_min_stars(),
+                lookback_days: default_lookback_days(),
+                max_repos: default_max_repos(),
+            },
+            solana: SolanaConfig {
+                rpc_url: default_rpc_url(),
+                tracked_programs: default_programs(),
+            },
+            social: SocialConfig::default(),
+            defi_llama: DefiLlamaConfig::default(),
+            llm: LlmConfig {
+                provider: crate::llm::Provider::default(),
+                model: default_model(),
+                max_tokens: default_max_tokens(),
+                api_key_env: None,
+                base_url: None,
+            },
+            agent_review: AgentReviewConfig::default(),
+        }
+    }
 }
 
 impl Config {
