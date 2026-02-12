@@ -106,6 +106,11 @@ pub fn tool_definitions() -> Vec<ToolDef> {
 
 /// Dispatch a tool call by name. Returns `(result_text, is_error)`.
 pub fn dispatch(repo_root: &Path, tool_name: &str, input: &Value) -> (String, bool) {
+    // Canonicalize repo_root so strip_prefix works when the CLI receives a relative path.
+    // WalkDir entries are absolute (via safe_resolve → canonicalize), so the prefix must match.
+    let repo_root = &repo_root
+        .canonicalize()
+        .unwrap_or_else(|_| repo_root.to_path_buf());
     match tool_name {
         "list_files" => handle_list_files(repo_root, input),
         "read_file" => handle_read_file(repo_root, input),

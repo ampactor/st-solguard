@@ -34,6 +34,9 @@ cargo run -- scan path/to/repo --deep --provider openrouter --model <model> --ou
 
 # Investigate a repo (agent-only, with CLI overrides)
 cargo run -- investigate path/to/repo --provider anthropic --model claude-sonnet-4-5-20250929 --max-turns 10 --cost-limit 5.0 --output findings.json
+
+# Test pipeline: investigate → validate → summary (development/calibration)
+cargo run -- test path/to/repo --provider openrouter --model <model> --max-turns 10 --output results.json
 ```
 
 ## Environment Variables
@@ -92,12 +95,19 @@ Analysis:
 - Static scanner runs first for triage context, then agent verifies/discovers
 - Hard stops: max_turns (30), cost_limit_usd ($20) — configurable via `[agent_review]` in config.toml
 - Supports Anthropic, OpenRouter, OpenAI wire formats for tool_use
+- Hardening: progress logging (info-level), stuck-loop detection (3x same call → nudge), malformed input guard, forced summary turn (converse with empty tools when max_turns hit with no findings)
+
+**Adversarial validator** (`test` subcommand): Two-phase pipeline:
+1. Investigator finds vulnerabilities (agent_review.rs)
+2. Validator tries to DISPROVE each finding (validator.rs) → Confirmed / Disputed / Dismissed
+- Same tool access as investigator, adversarial system prompt
+- Forced summary fallback for verdict extraction
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/main.rs` | CLI entry (5 subcommands: run, narratives, scan, investigate, render) |
+| `src/main.rs` | CLI entry (6 subcommands: run, narratives, scan, investigate, test, render) |
 | `src/config.rs` | TOML + env var config loading, `AgentReviewConfig` |
 | `src/error.rs` | Error types |
 | `src/http.rs` | HTTP client with retry/backoff |
@@ -113,6 +123,7 @@ Analysis:
 | `src/security/ast_scan.rs` | 3 syn-based AST patterns |
 | `src/security/agent_tools.rs` | 4 repo investigation tools for deep agent review |
 | `src/security/agent_review.rs` | Multi-turn agent loop: conversation → tool dispatch → finding extraction |
+| `src/security/validator.rs` | Adversarial second-pass: tries to disprove findings → Confirmed/Disputed/Dismissed |
 | `src/output/mod.rs` | Combined report rendering |
 | `config.toml` | Default configuration (including `[agent_review]`) |
 | `templates/solguard_report.html` | HTML report template |
@@ -131,8 +142,9 @@ Durable state: `~/.claude/projects/-home-suds-Documents/memory/superteam-sprint.
 | `src/narrative/*.rs` | CLAUDE.md (Narrative Pipeline) | Signal sources, synthesis |
 | `src/security/mod.rs` | CLAUDE.md (Security Pipeline) | Scanner orchestration, scan_repo_deep |
 | `src/security/regex_scan.rs`, `ast_scan.rs` | CLAUDE.md (Security Pipeline) | Pattern IDs, scan logic |
-| `src/security/agent_review.rs` | CLAUDE.md (Security Pipeline) | Agent loop, system prompt, finding extraction |
-| `src/security/agent_tools.rs` | CLAUDE.md (Security Pipeline) | Tool definitions, dispatch |
+| `src/security/agent_review.rs` | CLAUDE.md (Security Pipeline) | Agent loop, system prompt, finding extraction, hardening |
+| `src/security/validator.rs` | CLAUDE.md (Security Pipeline) | Validator module, verdicts, test subcommand |
+| `src/security/agent_tools.rs` | CLAUDE.md (Security Pipeline) | Tool definitions, dispatch, path canonicalization |
 | `src/config.rs`, `config.toml` | CLAUDE.md (Environment Variables) | Config options, agent_review section |
 | `src/llm.rs` | CLAUDE.md (Key Files) | Provider support, converse() wire formats |
 | `src/main.rs` | CLAUDE.md (Run) | CLI subcommands, flags |

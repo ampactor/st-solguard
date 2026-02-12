@@ -2,6 +2,7 @@ pub mod agent_review;
 pub mod agent_tools;
 mod ast_scan;
 mod regex_scan;
+pub mod validator;
 
 use crate::config::AgentReviewConfig;
 use crate::llm::LlmClient;

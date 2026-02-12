@@ -13,8 +13,9 @@ use crate::llm::{
 use crate::security::agent_tools;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::Path;
-use tracing::{debug, info, warn};
+use tracing::{info, warn};
 
 /// A verified finding from the agent review.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -162,6 +163,9 @@ pub async fn investigate(
         "starting agent investigation"
     );
 
+    // History for stuck-loop detection: (tool_name, hash_of_input)
+    let mut recent_calls: Vec<(String, u64)> = Vec::new();
+
     // Agent loop
     loop {
         // Hard stop: max turns
@@ -198,11 +202,9 @@ pub async fn investigate(
 
         stats.accumulate(&response.usage, llm.model());
 
-        debug!(
-            turn = stats.turns,
-            stop = ?response.stop_reason,
+        info!(
             cost = format!("${:.4}", stats.total_cost_usd),
-            "agent turn"
+            "turn {}/{}: {:?}", stats.turns, config.max_turns, response.stop_reason,
         );
 
         // Check if the response contains tool use calls
@@ -225,17 +227,69 @@ pub async fn investigate(
 
         if response.stop_reason == StopReason::EndTurn || tool_uses.is_empty() {
             // LLM is done — extract findings from the last text block
-            debug!("agent finished (end_turn), extracting findings");
+            info!("agent finished (end_turn), extracting findings");
             break;
+        }
+
+        // Stuck-loop detection: check if any (name, input_hash) appears 3+ times
+        let mut stuck = false;
+        for (_, name, input) in &tool_uses {
+            let mut hasher = DefaultHasher::new();
+            input.to_string().hash(&mut hasher);
+            let input_hash = hasher.finish();
+            recent_calls.push((name.clone(), input_hash));
+            let count = recent_calls
+                .iter()
+                .filter(|(n, h)| n == name && *h == input_hash)
+                .count();
+            if count >= 3 {
+                stuck = true;
+                break;
+            }
+        }
+
+        if stuck {
+            info!("stuck loop detected — injecting nudge");
+            let mut tool_results = Vec::new();
+            for (id, _, _) in &tool_uses {
+                tool_results.push(ContentBlock::ToolResult {
+                    tool_use_id: id.clone(),
+                    content: "You have called the same tool with the same arguments multiple times. Try a different approach or provide your final findings.".into(),
+                    is_error: false,
+                });
+            }
+            messages.push(ConversationMessage {
+                role: Role::User,
+                content: tool_results,
+            });
+            continue;
         }
 
         // Execute tools and collect results
         let mut tool_results = Vec::new();
         for (id, name, input) in &tool_uses {
             stats.tool_calls += 1;
-            debug!(tool = %name, "executing tool");
+
+            // Guard: malformed tool input
+            if !input.is_object() {
+                info!(tool = %name, "malformed tool input (not a JSON object)");
+                tool_results.push(ContentBlock::ToolResult {
+                    tool_use_id: id.clone(),
+                    content: "Invalid tool input: expected a JSON object with named parameters"
+                        .into(),
+                    is_error: true,
+                });
+                continue;
+            }
+
+            info!(tool = %name, "executing tool");
 
             let (result, is_error) = agent_tools::dispatch(repo_path, name, input);
+
+            // Summarize result for logging
+            let summary = summarize_tool_result(name, &result);
+            info!(tool = %name, "{summary}");
+
             tool_results.push(ContentBlock::ToolResult {
                 tool_use_id: id.clone(),
                 content: result,
@@ -251,7 +305,40 @@ pub async fn investigate(
     }
 
     // Extract findings from the conversation
-    let findings = extract_findings(&messages);
+    let mut findings = extract_findings(&messages);
+
+    // If no findings extracted and the model was still investigating (never EndTurned),
+    // force one final turn asking for the summary — call converse() without tools so
+    // the model MUST produce text.
+    if findings.is_empty() {
+        info!("no findings extracted, forcing summary turn");
+        messages.push(ConversationMessage {
+            role: Role::User,
+            content: vec![ContentBlock::Text {
+                text: "You have run out of investigation turns. Based on everything you have \
+                       read so far, produce your final security findings NOW as a JSON array. \
+                       Each finding must have: title, severity, description, evidence, \
+                       attack_scenario, remediation, confidence, affected_files."
+                    .into(),
+            }],
+        });
+        if let Ok(response) = llm.converse(SYSTEM_PROMPT, &messages, &[]).await {
+            stats.accumulate(&response.usage, llm.model());
+            // Log what the model actually said for debugging
+            for block in &response.content {
+                if let ContentBlock::Text { text } = block {
+                    let preview: String = text.chars().take(500).collect();
+                    info!(len = text.len(), "forced summary response: {preview}");
+                }
+            }
+            messages.push(ConversationMessage {
+                role: Role::Assistant,
+                content: response.content,
+            });
+            findings = extract_findings(&messages);
+            info!(findings = findings.len(), "forced summary extracted");
+        }
+    }
 
     info!(
         findings = findings.len(),
@@ -262,6 +349,32 @@ pub async fn investigate(
     );
 
     Ok((findings, stats))
+}
+
+/// Produce a brief log-friendly summary of a tool result.
+fn summarize_tool_result(tool: &str, result: &str) -> String {
+    match tool {
+        "list_files" => {
+            let n = result.lines().count();
+            format!("listed {n} entries")
+        }
+        "read_file" => {
+            let n = result.lines().count();
+            format!("read {n} lines")
+        }
+        "search_code" => {
+            let n = result.lines().count();
+            format!("{n} match lines")
+        }
+        "get_file_structure" => {
+            let n = result.lines().count();
+            format!("{n} structure items")
+        }
+        _ => {
+            let len = result.len();
+            format!("{len} bytes")
+        }
+    }
 }
 
 /// Extract structured findings from the agent's conversation.
