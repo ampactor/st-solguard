@@ -1,5 +1,6 @@
 // Autonomous orchestration: narrative → target selection → scan → combined report
 
+use crate::LlmOverride;
 use crate::narrative;
 use crate::output;
 use crate::security;
@@ -19,12 +20,13 @@ pub async fn run_full_pipeline(
     config_path: PathBuf,
     output_path: PathBuf,
     repos_dir: PathBuf,
+    llm_override: Option<LlmOverride>,
 ) -> Result<()> {
     info!("SolGuard autonomous pipeline starting");
 
     // Phase 1: Narrative detection
     info!("Phase 1: Detecting narratives...");
-    let narratives = narrative::run_narrative_pipeline(&config_path).await?;
+    let narratives = narrative::run_narrative_pipeline(&config_path, llm_override.as_ref()).await?;
     info!(count = narratives.len(), "narratives detected");
 
     // Phase 2: Target selection from narratives

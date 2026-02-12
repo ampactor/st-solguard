@@ -5,6 +5,7 @@ mod solana_rpc;
 mod synthesizer;
 mod types;
 
+use crate::LlmOverride;
 use crate::config::Config;
 use crate::http::HttpClient;
 use crate::llm::LlmClient;
@@ -23,11 +24,19 @@ pub struct Narrative {
 }
 
 /// Run the full narrative detection pipeline from config.
-pub async fn run_narrative_pipeline(config_path: &Path) -> Result<Vec<Narrative>> {
+pub async fn run_narrative_pipeline(
+    config_path: &Path,
+    llm_override: Option<&LlmOverride>,
+) -> Result<Vec<Narrative>> {
     info!("narrative pipeline: starting");
 
-    let config = Config::load(config_path).map_err(|e| anyhow::anyhow!("{e}"))?;
+    let mut config = Config::load(config_path).map_err(|e| anyhow::anyhow!("{e}"))?;
     config.validate().map_err(|e| anyhow::anyhow!("{e}"))?;
+
+    if let Some(ov) = llm_override {
+        config.llm.provider = ov.provider.clone();
+        config.llm.model = ov.model.clone();
+    }
 
     let http = HttpClient::new("st-solguard/0.1.0").map_err(|e| anyhow::anyhow!("{e}"))?;
 
