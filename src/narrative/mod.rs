@@ -22,6 +22,8 @@ pub struct Narrative {
     pub confidence: f64,
     pub trend: String,
     pub active_repos: Vec<String>,
+    #[serde(default)]
+    pub finding_count: usize,
 }
 
 /// Run the full narrative detection pipeline from config.
@@ -113,6 +115,7 @@ pub async fn run_narrative_pipeline(
             confidence: n.confidence,
             trend: n.trend.to_string(),
             active_repos: repo_names.clone(),
+            finding_count: 0,
         })
         .collect();
 

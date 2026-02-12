@@ -31,6 +31,7 @@ struct NarrativeView {
     confidence_pct: u32,
     trend: String,
     repo_count: usize,
+    finding_count: usize,
 }
 
 #[allow(dead_code)] // fields used by Askama template
@@ -162,6 +163,7 @@ pub fn render_combined_report(
             confidence_pct: (n.confidence * 100.0) as u32,
             trend: n.trend.clone(),
             repo_count: n.active_repos.len(),
+            finding_count: n.finding_count,
         })
         .collect();
 

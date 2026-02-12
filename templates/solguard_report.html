@@ -89,6 +89,11 @@
                     <div class="mt-2 flex gap-2">
                         <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.trend }}</span>
                         <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.repo_count }} repos</span>
+                        {% if n.finding_count > 0 %}
+                        <span class="text-xs bg-red-900/30 text-red-400 px-2 py-0.5 rounded">
+                            {{ n.finding_count }} security findings
+                        </span>
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
