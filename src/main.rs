@@ -1,4 +1,8 @@
 mod agent;
+mod config;
+mod error;
+mod http;
+mod llm;
 mod narrative;
 mod output;
 mod security;
