@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SolGuard — Ecosystem Intelligence Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        solana: { purple: '#9945FF', green: '#14F195' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', system-ui, sans-serif; }
+        .gradient-text {
+            background: linear-gradient(135deg, #9945FF, #14F195);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        details > summary { cursor: pointer; }
+        details > summary::-webkit-details-marker { display: none; }
+        details > summary::marker { display: none; content: ""; }
+    </style>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+    <header class="border-b border-gray-800 px-6 py-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold gradient-text">SolGuard</h1>
+                <p class="text-gray-400 text-sm">Autonomous Solana Ecosystem Intelligence</p>
+            </div>
+            <div class="text-right text-sm text-gray-500">
+                <p>Generated: 2026-02-12 07:45 UTC</p>
+                <p>8 narratives | 155 findings across 4 repos</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-6 py-8 space-y-12">
+        <!-- Stats -->
+        <div class="grid grid-cols-4 gap-4">
+            <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                <p class="text-3xl font-bold text-solana-green">8</p>
+                <p class="text-gray-400 text-sm">Emerging Narratives</p>
+            </div>
+            <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                <p class="text-3xl font-bold text-blue-400">4</p>
+                <p class="text-gray-400 text-sm">Repos Scanned</p>
+            </div>
+            <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                <p class="text-3xl font-bold text-red-400">102</p>
+                <p class="text-gray-400 text-sm">Critical/High Findings</p>
+            </div>
+            <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                <p class="text-3xl font-bold text-yellow-400">155</p>
+                <p class="text-gray-400 text-sm">Total Findings</p>
+            </div>
+        </div>
+
+        <!-- Cross-reference insight -->
+        
+        <div class="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
+            <h3 class="text-yellow-400 font-semibold mb-2">Ecosystem Risk Map</h3>
+            <p class="text-gray-300 text-sm">SolGuard detected <strong>8</strong> growth narratives and scanned <strong>4</strong> repos from those emerging sectors. Found <strong>155</strong> vulnerability patterns — 102 at Critical/High severity. Repos in fast-growing sectors often ship faster than they audit.</p>
+        </div>
+        
+
+        <!-- Narratives -->
+        <section>
+            <h2 class="text-xl font-bold mb-6 text-gray-200">Emerging Narratives</h2>
+            
+            <div class="space-y-4">
+                
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">Jupiter Dominance as Solana&#39;s DeFi Routing Layer</h3>
+                        <span class="text-sm text-gray-400">88% confidence</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">Jupiter Aggregator v6 processes an estimated 211,765 tx/hr — roughly 8.5x the throughput of Raydium AMM (25,000 tx/hr) — cementing its position as the default routing layer for Solana DeFi. This matters because aggregator dominance concentrates liquidity discovery into a single protocol, creating a structural dependency where new DEXes must integrate Jupiter to reach users. Combined with 9 new DeFi GitHub repos (269 stars, 229 forks) including DEX parsers and arbitrage bots, the surrounding tooling ecosystem is building specifically around Jupiter&#39;s transaction flow.</p>
+                    <div class="mt-2 flex gap-2">
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Accelerating</span>
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">2 repos</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">Anti-JIT and MEV Protection Tooling Surge</h3>
+                        <span class="text-sm text-gray-400">75% confidence</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">The imbue-bit/no_JIT repository (181 stars — the single most-starred new Solana DeFi repo this month) signals strong developer and user demand for MEV protection on Solana, specifically targeting JIT sandwich attacks on AMMs. This represents a structural shift from passive acceptance of MEV extraction toward active countermeasures at the application layer. The high fork count in DeFi repos (229 forks across 9 repos) suggests downstream builders are actively adapting these tools.</p>
+                    <div class="mt-2 flex gap-2">
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Emerging</span>
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">2 repos</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">Jito Consolidating Liquid Staking While Marinade Stagnates</h3>
+                        <span class="text-sm text-gray-400">92% confidence</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">Jito Stake Pool processes 380 tx/hr versus Marinade Finance&#39;s 9 tx/hr — a 40:1 activity ratio indicating a decisive shift in liquid staking market share. With $24.8B in total Solana liquid staking TVL, this concentration matters: Jito&#39;s MEV-sharing model is winning over Marinade&#39;s traditional delegation approach. The second-order effect is that jitoSOL becomes the dominant LST collateral across Solana lending ($5.5B TVL) and DeFi composability layers.</p>
+                    <div class="mt-2 flex gap-2">
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Accelerating</span>
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">1 repos</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">Solana Spot ETF Momentum Driving Institutional Narrative</h3>
+                        <span class="text-sm text-gray-400">80% confidence</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">Helius Blog coverage of 16 U.S. Solana Spot ETFs represents a structural legitimization event for Solana as an institutional asset class. This directly impacts the 91.5% circulating supply ratio by creating new demand sinks for SOL tokens. The convergence of ETF filings with Solana&#39;s #2 chain TVL ranking ($6.37B) suggests coordinated institutional positioning across custody, staking yield, and regulated access products.</p>
+                    <div class="mt-2 flex gap-2">
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Accelerating</span>
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">0 repos</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">AI Agent Infrastructure on Solana (SIGNIA and x402)</h3>
+                        <span class="text-sm text-gray-400">65% confidence</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">SIGNIA (207 stars) and x402-deploy represent early but high-signal AI-agent-on-chain development. The star-to-fork ratio (222:21) suggests more spectators than builders, indicating narrative-stage rather than production-stage. However, AI trading bots appearing in trending repos and DeFi tooling repos blurring the line between automated trading and agent frameworks point to Solana&#39;s high throughput (1,179 non-vote TPS) as an execution layer for autonomous agents.</p>
+                    <div class="mt-2 flex gap-2">
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Emerging</span>
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">1 repos</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">Firedancer Validator Client Maturation and Network Diversification</h3>
+                        <span class="text-sm text-gray-400">82% confidence</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">Firedancer (1,396 stars) remains the most-starred active Solana repo this week, and Agave 3.1 updates signal dual-client maturation — a structural resilience upgrade. The combination of validator software development with network performance data (3,175 TPS total, epoch 925 at 27.2% progress, 487B cumulative transactions) suggests a chain operating at production scale while actively upgrading its consensus infrastructure.</p>
+                    <div class="mt-2 flex gap-2">
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Stable</span>
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">0 repos</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">Memecoin and Token Launch Tooling Proliferation</h3>
+                        <span class="text-sm text-gray-400">85% confidence</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">Multiple signals converge on memecoin infrastructure: fdv.lol (93 stars), Meteora-DBC-Bagsapp-Bundler (43 stars), pumpdev.io (20 stars), and Metaplex Token Metadata processing 4,176 tx/hr. This represents an industrialization of token launch infrastructure on Solana. The high Metaplex throughput relative to NFT marketplace activity (Tensor at only 28 tx/hr) suggests token metadata creation vastly outpaces secondary trading, consistent with a high-churn launch economy.</p>
+                    <div class="mt-2 flex gap-2">
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Stable</span>
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">1 repos</span>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">RWA Emergence as Third-Largest Non-CEX DeFi Category</h3>
+                        <span class="text-sm text-gray-400">72% confidence</span>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">Real World Assets hold $6.9B in TVL across 19 Solana protocols, making RWA the largest non-CEX, non-liquid-staking DeFi category — surpassing even lending ($5.5B). This is structurally significant because RWA TVL represents external capital entering the Solana ecosystem rather than recycled crypto-native liquidity. Notable divergence: zero new GitHub repos in the RWA category despite the large TVL, suggesting moat consolidation by existing protocols.</p>
+                    <div class="mt-2 flex gap-2">
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Stable</span>
+                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">0 repos</span>
+                    </div>
+                </div>
+                
+            </div>
+            
+        </section>
+
+        <!-- Security Summary -->
+        <section>
+            <h2 class="text-xl font-bold mb-6 text-gray-200">Security Summary</h2>
+
+            <!-- Severity Breakdown -->
+            <div class="grid grid-cols-5 gap-3 mb-6">
+                <div class="bg-red-900/20 border border-red-800/50 rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-red-500">2</p>
+                    <p class="text-gray-400 text-xs">Critical</p>
+                </div>
+                <div class="bg-orange-900/20 border border-orange-800/50 rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-orange-400">100</p>
+                    <p class="text-gray-400 text-xs">High</p>
+                </div>
+                <div class="bg-yellow-900/20 border border-yellow-800/50 rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-yellow-400">35</p>
+                    <p class="text-gray-400 text-xs">Medium</p>
+                </div>
+                <div class="bg-blue-900/20 border border-blue-800/50 rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-blue-400">18</p>
+                    <p class="text-gray-400 text-xs">Low</p>
+                </div>
+                <div class="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-gray-400">0</p>
+                    <p class="text-gray-400 text-xs">Info</p>
+                </div>
+            </div>
+
+            <!-- Findings by Repo -->
+            
+            <div class="overflow-x-auto mb-8">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-800 text-gray-400">
+                            <th class="text-left py-2 px-3">Repository</th>
+                            <th class="text-center py-2 px-3">Critical</th>
+                            <th class="text-center py-2 px-3">High</th>
+                            <th class="text-center py-2 px-3">Medium</th>
+                            <th class="text-center py-2 px-3">Low</th>
+                            <th class="text-center py-2 px-3">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                        <tr class="border-b border-gray-800/50 hover:bg-gray-900/50">
+                            <td class="py-2 px-3 text-gray-200 font-medium">raydium-clmm</td>
+                            <td class="py-2 px-3 text-center text-gray-600">0</td>
+                            <td class="py-2 px-3 text-center text-orange-400 font-bold">38</td>
+                            <td class="py-2 px-3 text-center text-yellow-400">12</td>
+                            <td class="py-2 px-3 text-center text-gray-500">10</td>
+                            <td class="py-2 px-3 text-center text-gray-300 font-medium">60</td>
+                        </tr>
+                        
+                        <tr class="border-b border-gray-800/50 hover:bg-gray-900/50">
+                            <td class="py-2 px-3 text-gray-200 font-medium">switchboard</td>
+                            <td class="py-2 px-3 text-center text-gray-600">0</td>
+                            <td class="py-2 px-3 text-center text-orange-400 font-bold">32</td>
+                            <td class="py-2 px-3 text-center text-yellow-400">19</td>
+                            <td class="py-2 px-3 text-center text-gray-500">0</td>
+                            <td class="py-2 px-3 text-center text-gray-300 font-medium">51</td>
+                        </tr>
+                        
+                        <tr class="border-b border-gray-800/50 hover:bg-gray-900/50">
+                            <td class="py-2 px-3 text-gray-200 font-medium">tensor-marketplace</td>
+                            <td class="py-2 px-3 text-center text-red-500 font-bold">2</td>
+                            <td class="py-2 px-3 text-center text-orange-400 font-bold">27</td>
+                            <td class="py-2 px-3 text-center text-yellow-400">3</td>
+                            <td class="py-2 px-3 text-center text-gray-500">0</td>
+                            <td class="py-2 px-3 text-center text-gray-300 font-medium">32</td>
+                        </tr>
+                        
+                        <tr class="border-b border-gray-800/50 hover:bg-gray-900/50">
+                            <td class="py-2 px-3 text-gray-200 font-medium">raydium-cp-swap</td>
+                            <td class="py-2 px-3 text-center text-gray-600">0</td>
+                            <td class="py-2 px-3 text-center text-orange-400 font-bold">3</td>
+                            <td class="py-2 px-3 text-center text-yellow-400">1</td>
+                            <td class="py-2 px-3 text-center text-gray-500">8</td>
+                            <td class="py-2 px-3 text-center text-gray-300 font-medium">12</td>
+                        </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
+            
+        </section>
+
+        <!-- Top Findings (Critical + High, grouped) -->
+        
+        <section>
+            <h2 class="text-xl font-bold mb-6 text-gray-200">Critical &amp; High Severity Findings</h2>
+            <div class="space-y-4">
+                
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">Potential Arbitrary CPI Target</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">2 instances across 1 repos</span>
+                            <span class="text-sm font-medium text-red-500">Critical</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">Cross-program invocation where the target program ID may come from user input. Attacker could redirect the CPI to a malicious program.</p>
+                    <div class="mt-2 text-sm text-gray-300"><span class="text-gray-500">Fix:</span> Hardcode the target program ID or validate it against a known constant.</div>
+                    <div class="mt-2 flex flex-wrap gap-1">
+                        
+                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">tensor-marketplace</span>
+                        
+                    </div>
+                    
+                    <details class="mt-2">
+                        <summary class="text-xs text-gray-500 hover:text-gray-400">Example locations</summary>
+                        <div class="mt-1 space-y-0.5">
+                            
+                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/noop.rs:52</div>
+                            
+                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/noop.rs:68</div>
+                            
+                        </div>
+                    </details>
+                    
+                </div>
+                
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">Unvalidated remaining_accounts Usage</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">66 instances across 4 repos</span>
+                            <span class="text-sm font-medium text-orange-400">High</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.</p>
+                    <div class="mt-2 text-sm text-gray-300"><span class="text-gray-500">Fix:</span> Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status.</div>
+                    <div class="mt-2 flex flex-wrap gap-1">
+                        
+                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">raydium-clmm</span>
+                        
+                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">raydium-cp-swap</span>
+                        
+                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">switchboard</span>
+                        
+                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">tensor-marketplace</span>
+                        
+                    </div>
+                    
+                    <details class="mt-2">
+                        <summary class="text-xs text-gray-500 hover:text-gray-400">Example locations</summary>
+                        <div class="mt-1 space-y-0.5">
+                            
+                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/admin/update_amm_config.rs:24</div>
+                            
+                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/admin/update_amm_config.rs:28</div>
+                            
+                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/decrease_liquidity.rs:162</div>
+                            
+                        </div>
+                    </details>
+                    
+                </div>
+                
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">Potential Type Cosplay (Missing Discriminator)</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">25 instances across 4 repos</span>
+                            <span class="text-sm font-medium text-orange-400">High</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.</p>
+                    <div class="mt-2 text-sm text-gray-300"><span class="text-gray-500">Fix:</span> Use Anchor&#39;s Account&#60;&#62; type (auto-checks discriminator) or manually verify the 8-byte discriminator.</div>
+                    <div class="mt-2 flex flex-wrap gap-1">
+                        
+                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">raydium-clmm</span>
+                        
+                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">raydium-cp-swap</span>
+                        
+                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">switchboard</span>
+                        
+                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">tensor-marketplace</span>
+                        
+                    </div>
+                    
+                    <details class="mt-2">
+                        <summary class="text-xs text-gray-500 hover:text-gray-400">Example locations</summary>
+                        <div class="mt-1 space-y-0.5">
+                            
+                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/operation_account.rs:252</div>
+                            
+                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/oracle.rs:207</div>
+                            
+                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs:1794</div>
+                            
+                        </div>
+                    </details>
+                    
+                </div>
+                
+                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
+                    <div class="flex items-start justify-between">
+                        <h3 class="font-semibold text-gray-100">Unsafe Block in Solana Program</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">9 instances across 1 repos</span>
+                            <span class="text-sm font-medium text-orange-400">High</span>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 text-sm mt-2">Function contains an unsafe block. Requires careful review for memory safety.</p>
+                    <div class="mt-2 text-sm text-gray-300"><span class="text-gray-500">Fix:</span> Review unsafe block for soundness. Consider safe alternatives.</div>
+                    <div class="mt-2 flex flex-wrap gap-1">
+                        
+                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">switchboard</span>
+                        
+                    </div>
+                    
+                    <details class="mt-2">
+                        <summary class="text-xs text-gray-500 hover:text-gray-400">Example locations</summary>
+                        <div class="mt-1 space-y-0.5">
+                            
+                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/switchboard/src/instruction_compat.rs:73</div>
+                            
+                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/oracle_quote/feed_info.rs:182</div>
+                            
+                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/oracle_quote/quote_verifier.rs:1252</div>
+                            
+                        </div>
+                    </details>
+                    
+                </div>
+                
+            </div>
+        </section>
+        
+
+        <!-- Remaining Findings (grouped, collapsible) -->
+        
+        <section>
+            <details>
+                <summary class="text-xl font-bold mb-6 text-gray-200 flex items-center gap-2">
+                    <span class="text-sm bg-gray-800 px-2 py-1 rounded">+2 patterns</span>
+                    All Medium/Low/Info Findings
+                </summary>
+                <div class="space-y-3 mt-4">
+                    
+                    <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-800/50">
+                        <div class="flex items-start justify-between">
+                            <span class="text-sm text-gray-200">PDA Bump Seed Not Stored/Verified</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">35 instances</span>
+                                <span class="text-xs text-yellow-400">Medium</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 text-xs mt-1">PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.</p>
+                        <div class="mt-1 flex flex-wrap gap-1">
+                            
+                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">raydium-clmm</span>
+                            
+                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">raydium-cp-swap</span>
+                            
+                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">switchboard</span>
+                            
+                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">tensor-marketplace</span>
+                            
+                        </div>
+                        
+                        <details class="mt-1">
+                            <summary class="text-xs text-gray-600 hover:text-gray-500">Example locations</summary>
+                            <div class="mt-1 space-y-0.5">
+                                
+                                <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap.rs:900</div>
+                                
+                                <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs:848</div>
+                                
+                                <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs:1119</div>
+                                
+                            </div>
+                        </details>
+                        
+                    </div>
+                    
+                    <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-800/50">
+                        <div class="flex items-start justify-between">
+                            <span class="text-sm text-gray-200">Verbose Error Logging May Leak Account Keys</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">18 instances</span>
+                                <span class="text-xs text-blue-400">Low</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-500 text-xs mt-1">Function logs account keys via msg!(). This may leak sensitive information.</p>
+                        <div class="mt-1 flex flex-wrap gap-1">
+                            
+                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">raydium-clmm</span>
+                            
+                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">raydium-cp-swap</span>
+                            
+                        </div>
+                        
+                        <details class="mt-1">
+                            <summary class="text-xs text-gray-600 hover:text-gray-500">Example locations</summary>
+                            <div class="mt-1 space-y-0.5">
+                                
+                                <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/admin/update_amm_config.rs:64</div>
+                                
+                                <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/admin/update_amm_config.rs:74</div>
+                                
+                                <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/create_pool.rs:123</div>
+                                
+                            </div>
+                        </details>
+                        
+                    </div>
+                    
+                </div>
+            </details>
+        </section>
+        
+    </main>
+
+    <footer class="border-t border-gray-800 px-6 py-4 mt-12">
+        <div class="max-w-6xl mx-auto text-center text-gray-600 text-sm">
+            <p>Generated by <span class="gradient-text font-semibold">SolGuard</span> — autonomous Solana ecosystem intelligence</p>
+            <p class="mt-1">Pipeline: GitHub API + Solana RPC + blog scraping → LLM narrative synthesis → security scanning (13 patterns) → cross-referenced report</p>
+        </div>
+    </footer>
+</body>
+</html>
