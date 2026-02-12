@@ -130,6 +130,10 @@ enum Command {
         /// Path to config file (for agent_review settings)
         #[arg(short, long, default_value = "config.toml")]
         config: PathBuf,
+
+        /// Write findings to file instead of stdout
+        #[arg(short, long)]
+        output: Option<PathBuf>,
     },
 
     /// Investigate a repo with the multi-turn security agent (deep review only)
@@ -156,6 +160,10 @@ enum Command {
         /// Path to config file
         #[arg(short, long, default_value = "config.toml")]
         config: PathBuf,
+
+        /// Write findings to file instead of stdout
+        #[arg(long)]
+        output: Option<PathBuf>,
     },
 
     /// Render a report from pre-computed analysis files (no LLM calls)
@@ -218,20 +226,18 @@ async fn main() -> Result<()> {
             provider,
             model,
             config,
+            output,
         } => {
-            if deep {
+            let findings = if deep {
                 let cfg = config::Config::load(&config).unwrap_or_default();
                 let llm_override = make_llm_override(provider, model);
                 let llm = build_llm_client(&cfg.llm, llm_override.as_ref())?;
-                let findings =
-                    security::scan_repo_deep(&repo_path, &llm, &cfg.agent_review).await?;
-                let json = serde_json::to_string_pretty(&findings)?;
-                println!("{json}");
+                security::scan_repo_deep(&repo_path, &llm, &cfg.agent_review).await?
             } else {
-                let findings = security::scan_repo(&repo_path).await?;
-                let json = serde_json::to_string_pretty(&findings)?;
-                println!("{json}");
-            }
+                security::scan_repo(&repo_path).await?
+            };
+            let json = serde_json::to_string_pretty(&findings)?;
+            write_or_print(&json, output.as_deref())?;
             Ok(())
         }
         Command::Investigate {
@@ -241,6 +247,7 @@ async fn main() -> Result<()> {
             max_turns,
             cost_limit,
             config,
+            output,
         } => {
             let cfg = config::Config::load(&config).unwrap_or_default();
             let llm_override = make_llm_override(provider, model);
@@ -254,7 +261,7 @@ async fn main() -> Result<()> {
             }
             let findings = security::scan_repo_deep(&repo_path, &llm, &agent_config).await?;
             let json = serde_json::to_string_pretty(&findings)?;
-            println!("{json}");
+            write_or_print(&json, output.as_deref())?;
             Ok(())
         }
         Command::Render {
@@ -263,6 +270,20 @@ async fn main() -> Result<()> {
             output,
         } => render_from_files(narratives, findings, output),
     }
+}
+
+fn write_or_print(json: &str, output: Option<&std::path::Path>) -> Result<()> {
+    match output {
+        Some(path) => {
+            if let Some(parent) = path.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            std::fs::write(path, json)?;
+            eprintln!("Findings written to {}", path.display());
+        }
+        None => println!("{json}"),
+    }
+    Ok(())
 }
 
 fn render_from_files(

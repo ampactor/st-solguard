@@ -18,6 +18,7 @@ For each narrative you identify, provide:
 4. Which signal indices support this narrative (from the input data)
 5. Trend direction: "Accelerating" (growing faster), "Stable" (steady), "Decelerating" (slowing), "Emerging" (too early to tell, but signals present)
 6. Key quantitative metrics that back the narrative
+7. Active repositories — pick ONLY from the "discovered_repos" list in the input. Associate each repo with the narrative it most relates to. A repo can appear in multiple narratives if relevant, but don't assign repos to narratives they're unrelated to. If no discovered repos relate to a narrative, use an empty list.
 
 Analysis framework — apply these lenses to each narrative:
 - **Historical context:** Is this trend new, or a continuation/acceleration of something established? Reference prior ecosystem state where the data allows.
@@ -34,7 +35,8 @@ Respond in JSON:
       "confidence": 0.85,
       "supporting_signals": [0, 3, 7],
       "trend": "Accelerating",
-      "key_metrics": [{"name": "...", "value": 123.4, "unit": "..."}]
+      "key_metrics": [{"name": "...", "value": 123.4, "unit": "..."}],
+      "active_repos": ["owner/repo-name", "owner/other-repo"]
     }
   ]
 }
@@ -63,6 +65,8 @@ struct RawNarrative {
     trend: String,
     #[serde(default)]
     key_metrics: Vec<RawMetric>,
+    #[serde(default)]
+    active_repos: Vec<String>,
 }
 
 #[derive(Deserialize)]
@@ -80,6 +84,7 @@ pub struct SynthesizedNarrative {
     pub trend: TrendDirection,
     #[allow(dead_code)]
     pub key_metrics: Vec<Metric>,
+    pub active_repos: Vec<String>,
 }
 
 pub async fn identify_narratives(
@@ -112,6 +117,7 @@ pub async fn identify_narratives(
                     unit: m.unit,
                 })
                 .collect(),
+            active_repos: n.active_repos,
         })
         .collect();
 

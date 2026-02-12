@@ -23,14 +23,17 @@ cargo run -- run -c config.toml -o solguard-report.html --deep --provider openro
 # Narrative detection only
 cargo run -- narratives -c config.toml
 
-# Static scan a specific repo
+# Static scan a specific repo (stdout)
 cargo run -- scan path/to/repo
 
+# Static scan with output to file
+cargo run -- scan path/to/repo --output findings.json
+
 # Deep agent scan (static + multi-turn LLM investigation)
-cargo run -- scan path/to/repo --deep --provider openrouter --model <model>
+cargo run -- scan path/to/repo --deep --provider openrouter --model <model> --output findings.json
 
 # Investigate a repo (agent-only, with CLI overrides)
-cargo run -- investigate path/to/repo --provider anthropic --model claude-sonnet-4-5-20250929 --max-turns 10 --cost-limit 5.0
+cargo run -- investigate path/to/repo --provider anthropic --model claude-sonnet-4-5-20250929 --max-turns 10 --cost-limit 5.0 --output findings.json
 ```
 
 ## Environment Variables

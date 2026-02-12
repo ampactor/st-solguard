@@ -134,6 +134,14 @@ pub fn scan(content: &str, file_path: &Path) -> Vec<Finding> {
             let line_number = content[..mat.start()].matches('\n').count() + 1;
 
             let lines: Vec<&str> = content.lines().collect();
+
+            // Skip matches on comment lines
+            if line_number > 0 && line_number <= lines.len() {
+                let line = lines[line_number - 1].trim_start();
+                if line.starts_with("//") || line.starts_with("///") || line.starts_with("*") {
+                    continue;
+                }
+            }
             let start = line_number.saturating_sub(3);
             let end = (line_number + 3).min(lines.len());
             let snippet: String = lines[start..end]
