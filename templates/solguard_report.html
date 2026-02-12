@@ -24,6 +24,9 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
+        details > summary { cursor: pointer; }
+        details > summary::-webkit-details-marker { display: none; }
+        details > summary::marker { display: none; content: ""; }
     </style>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen">
@@ -35,29 +38,37 @@
             </div>
             <div class="text-right text-sm text-gray-500">
                 <p>Generated: {{ generated_at }}</p>
-                <p>{{ narrative_count }} narratives | {{ finding_count }} security findings</p>
+                <p>{{ narrative_count }} narratives | {{ finding_count }} findings across {{ repo_count }} repos</p>
             </div>
         </div>
     </header>
 
     <main class="max-w-6xl mx-auto px-6 py-8 space-y-12">
         <!-- Stats -->
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-4 gap-4">
             <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
                 <p class="text-3xl font-bold text-solana-green">{{ narrative_count }}</p>
                 <p class="text-gray-400 text-sm">Emerging Narratives</p>
             </div>
             <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                <p class="text-3xl font-bold text-red-400">{{ finding_count }}</p>
-                <p class="text-gray-400 text-sm">Security Findings</p>
+                <p class="text-3xl font-bold text-blue-400">{{ repo_count }}</p>
+                <p class="text-gray-400 text-sm">Repos Scanned</p>
+            </div>
+            <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                <p class="text-3xl font-bold text-red-400">{{ critical_count }}</p>
+                <p class="text-gray-400 text-sm">Critical/High Findings</p>
+            </div>
+            <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                <p class="text-3xl font-bold text-yellow-400">{{ finding_count }}</p>
+                <p class="text-gray-400 text-sm">Total Findings</p>
             </div>
         </div>
 
         <!-- Cross-reference insight -->
         {% if narrative_count > 0 && finding_count > 0 %}
         <div class="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
-            <h3 class="text-yellow-400 font-semibold mb-2">Ecosystem Risk Alert</h3>
-            <p class="text-gray-300 text-sm">Growing narratives have active repos with security vulnerabilities. See details below.</p>
+            <h3 class="text-yellow-400 font-semibold mb-2">Ecosystem Risk Map</h3>
+            <p class="text-gray-300 text-sm">SolGuard detected <strong>{{ narrative_count }}</strong> growth narratives and scanned <strong>{{ repo_count }}</strong> repos from those emerging sectors. Found <strong>{{ finding_count }}</strong> vulnerability patterns — {{ critical_count }} at Critical/High severity. Repos in fast-growing sectors often ship faster than they audit.</p>
         </div>
         {% endif %}
 
@@ -85,33 +96,113 @@
             {% endif %}
         </section>
 
-        <!-- Security Findings -->
+        <!-- Security Summary -->
         <section>
-            <h2 class="text-xl font-bold mb-6 text-gray-200">Security Findings</h2>
-            {% if findings.is_empty() %}
-            <p class="text-gray-500">No findings yet. Run scanner against target repos.</p>
-            {% else %}
+            <h2 class="text-xl font-bold mb-6 text-gray-200">Security Summary</h2>
+
+            <!-- Severity Breakdown -->
+            <div class="grid grid-cols-5 gap-3 mb-6">
+                <div class="bg-red-900/20 border border-red-800/50 rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-red-500">{{ severity_critical }}</p>
+                    <p class="text-gray-400 text-xs">Critical</p>
+                </div>
+                <div class="bg-orange-900/20 border border-orange-800/50 rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-orange-400">{{ severity_high }}</p>
+                    <p class="text-gray-400 text-xs">High</p>
+                </div>
+                <div class="bg-yellow-900/20 border border-yellow-800/50 rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-yellow-400">{{ severity_medium }}</p>
+                    <p class="text-gray-400 text-xs">Medium</p>
+                </div>
+                <div class="bg-blue-900/20 border border-blue-800/50 rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-blue-400">{{ severity_low }}</p>
+                    <p class="text-gray-400 text-xs">Low</p>
+                </div>
+                <div class="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 text-center">
+                    <p class="text-2xl font-bold text-gray-400">{{ severity_info }}</p>
+                    <p class="text-gray-400 text-xs">Info</p>
+                </div>
+            </div>
+
+            <!-- Findings by Repo -->
+            {% if !repo_summaries.is_empty() %}
+            <div class="overflow-x-auto mb-8">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-800 text-gray-400">
+                            <th class="text-left py-2 px-3">Repository</th>
+                            <th class="text-center py-2 px-3">Critical</th>
+                            <th class="text-center py-2 px-3">High</th>
+                            <th class="text-center py-2 px-3">Medium</th>
+                            <th class="text-center py-2 px-3">Low</th>
+                            <th class="text-center py-2 px-3">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in repo_summaries %}
+                        <tr class="border-b border-gray-800/50 hover:bg-gray-900/50">
+                            <td class="py-2 px-3 text-gray-200 font-medium">{{ r.name }}</td>
+                            <td class="py-2 px-3 text-center {% if r.critical > 0 %}text-red-500 font-bold{% else %}text-gray-600{% endif %}">{{ r.critical }}</td>
+                            <td class="py-2 px-3 text-center {% if r.high > 0 %}text-orange-400 font-bold{% else %}text-gray-600{% endif %}">{{ r.high }}</td>
+                            <td class="py-2 px-3 text-center {% if r.medium > 0 %}text-yellow-400{% else %}text-gray-600{% endif %}">{{ r.medium }}</td>
+                            <td class="py-2 px-3 text-center text-gray-500">{{ r.low }}</td>
+                            <td class="py-2 px-3 text-center text-gray-300 font-medium">{{ r.total }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Top Findings (Critical + High only) -->
+        {% if !top_findings.is_empty() %}
+        <section>
+            <h2 class="text-xl font-bold mb-6 text-gray-200">Critical &amp; High Severity Findings</h2>
             <div class="space-y-4">
-                {% for f in findings %}
+                {% for f in top_findings %}
                 <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
                     <div class="flex items-start justify-between">
                         <h3 class="font-semibold text-gray-100">{{ f.title }}</h3>
                         <span class="text-sm font-medium {{ f.severity_class }}">{{ f.severity }}</span>
                     </div>
                     <p class="text-gray-400 text-sm mt-2">{{ f.description }}</p>
-                    <div class="mt-2 text-xs text-gray-500">{{ f.file_path }}</div>
+                    <div class="mt-2 text-xs text-gray-500">{{ f.file_path }}:{{ f.line_number }}</div>
                     <div class="mt-2 text-sm text-gray-300"><span class="text-gray-500">Fix:</span> {{ f.remediation }}</div>
                 </div>
                 {% endfor %}
             </div>
-            {% endif %}
         </section>
+        {% endif %}
+
+        <!-- All Findings (collapsible) -->
+        {% if finding_count > top_findings.len() %}
+        <section>
+            <details>
+                <summary class="text-xl font-bold mb-6 text-gray-200 flex items-center gap-2">
+                    <span class="text-sm bg-gray-800 px-2 py-1 rounded">+{{ remaining_count }} more</span>
+                    All Medium/Low/Info Findings
+                </summary>
+                <div class="space-y-3 mt-4">
+                    {% for f in remaining_findings %}
+                    <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-800/50">
+                        <div class="flex items-start justify-between">
+                            <span class="text-sm text-gray-200">{{ f.title }}</span>
+                            <span class="text-xs {{ f.severity_class }}">{{ f.severity }}</span>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">{{ f.file_path }}:{{ f.line_number }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </details>
+        </section>
+        {% endif %}
     </main>
 
     <footer class="border-t border-gray-800 px-6 py-4 mt-12">
         <div class="max-w-6xl mx-auto text-center text-gray-600 text-sm">
             <p>Generated by <span class="gradient-text font-semibold">SolGuard</span> — autonomous Solana ecosystem intelligence</p>
-            <p class="mt-1">Combines narrative detection + security scanning for comprehensive ecosystem analysis</p>
+            <p class="mt-1">Pipeline: GitHub API + Solana RPC + blog scraping → LLM narrative synthesis → security scanning (13 patterns) → cross-referenced report</p>
         </div>
     </footer>
 </body>
