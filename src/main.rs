@@ -1,3 +1,4 @@
+mod agent;
 mod narrative;
 mod output;
 mod security;
