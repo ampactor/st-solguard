@@ -26,10 +26,6 @@ pub enum Error {
 
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
-
-    #[error("Template error: {0}")]
-    #[allow(dead_code)]
-    Template(String),
 }
 
 impl Error {
