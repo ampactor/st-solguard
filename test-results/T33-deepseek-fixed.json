@@ -1,0 +1,42 @@
+[
+  {
+    "title": "Missing PDA Bump Verification Allows Unauthorized Account Creation",
+    "severity": "High",
+    "description": "The program uses `find_program_address` to derive PDAs but doesn't store or verify the canonical bump seed, allowing attackers to create accounts with different bumps that pass PDA checks but aren't actually program-controlled.",
+    "file_path": "shielded_pool_program/src/instructions/initialize.rs",
+    "line_number": 0,
+    "remediation": "Store the canonical bump in account data and verify it in all instructions using `seeds` + `bump = stored_bump`. For the nullifier account, store the bump in the account data or use `create_account_with_seed` with the canonical bump."
+  },
+  {
+    "title": "Missing State Account PDA Verification in Withdraw",
+    "severity": "Critical",
+    "description": "The withdraw instruction doesn't verify that the state account is the correct PDA, allowing an attacker to provide a fake state account with manipulated root history.",
+    "file_path": "shielded_pool_program/src/instructions/withdraw.rs",
+    "line_number": 0,
+    "remediation": "Add PDA verification for the state account in the withdraw instruction, similar to how it's done in deposit.rs line 47."
+  },
+  {
+    "title": "Missing Vault Ownership Check in Deposit",
+    "severity": "Critical",
+    "description": "The deposit instruction transfers SOL to the vault account but doesn't verify the vault is owned by the program before the transfer, allowing SOL to be sent to an attacker-controlled account.",
+    "file_path": "shielded_pool_program/src/instructions/deposit.rs",
+    "line_number": 0,
+    "remediation": "Move the vault ownership check (lines 59-61) to before the SOL transfer (line 44). Also add PDA verification with bump before the transfer."
+  },
+  {
+    "title": "Insufficient Recipient Validation in Withdraw",
+    "severity": "Medium",
+    "description": "The withdraw instruction only checks that the submitted recipient in the proof matches the provided recipient account, but doesn't verify the recipient account is writable or owned by the system program.",
+    "file_path": "shielded_pool_program/src/instructions/withdraw.rs",
+    "line_number": 0,
+    "remediation": "Add a check that the recipient account is owned by the system program before transferring funds."
+  },
+  {
+    "title": "Missing Reinitialization Protection for Nullifier Account",
+    "severity": "Medium",
+    "description": "The nullifier account is created with zero space and can be closed by anyone (since it's rent-exempt). An attacker could close it after use and recreate it, potentially enabling double-spend attacks.",
+    "file_path": "shielded_pool_program/src/instructions/withdraw.rs",
+    "line_number": 0,
+    "remediation": "Store a discriminator or flag in the nullifier account data (even 1 byte) to mark it as used, and check this flag in addition to checking lamports > 0."
+  }
+]

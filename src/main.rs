@@ -10,6 +10,7 @@ mod security;
 use anyhow::Result;
 use clap::Parser;
 use std::path::PathBuf;
+use tracing::info;
 
 /// CLI override for LLM provider/model.
 pub struct LlmOverride {
@@ -166,6 +167,36 @@ enum Command {
         output: Option<PathBuf>,
     },
 
+    /// Test a repo: investigate → validate findings → summary (development/calibration)
+    Test {
+        /// Path to the repository
+        repo_path: PathBuf,
+
+        /// LLM provider override: anthropic, openrouter, openai
+        #[arg(long)]
+        provider: Option<String>,
+
+        /// LLM model override
+        #[arg(long)]
+        model: Option<String>,
+
+        /// Maximum conversation turns (per phase)
+        #[arg(long)]
+        max_turns: Option<u32>,
+
+        /// Maximum cost in USD (per phase)
+        #[arg(long)]
+        cost_limit: Option<f64>,
+
+        /// Path to config file
+        #[arg(short, long, default_value = "config.toml")]
+        config: PathBuf,
+
+        /// Write results to file instead of stdout
+        #[arg(long)]
+        output: Option<PathBuf>,
+    },
+
     /// Render a report from pre-computed analysis files (no LLM calls)
     Render {
         /// Path to narratives JSON file
@@ -261,6 +292,59 @@ async fn main() -> Result<()> {
             }
             let findings = security::scan_repo_deep(&repo_path, &llm, &agent_config).await?;
             let json = serde_json::to_string_pretty(&findings)?;
+            write_or_print(&json, output.as_deref())?;
+            Ok(())
+        }
+        Command::Test {
+            repo_path,
+            provider,
+            model,
+            max_turns,
+            cost_limit,
+            config,
+            output,
+        } => {
+            let cfg = config::Config::load(&config).unwrap_or_default();
+            let llm_override = make_llm_override(provider, model);
+            let llm = build_llm_client(&cfg.llm, llm_override.as_ref())?;
+            let mut agent_config = cfg.agent_review;
+            if let Some(turns) = max_turns {
+                agent_config.max_turns = turns;
+            }
+            if let Some(limit) = cost_limit {
+                agent_config.cost_limit_usd = limit;
+            }
+
+            // Phase 1: Investigate
+            info!("phase 1: investigating repository");
+            let (findings, inv_stats) =
+                security::agent_review::investigate(&llm, &repo_path, &agent_config, None).await?;
+            info!(
+                findings = findings.len(),
+                turns = inv_stats.turns,
+                cost = format!("${:.4}", inv_stats.total_cost_usd),
+                "investigation complete"
+            );
+
+            // Phase 2: Validate
+            info!("phase 2: validating findings");
+            let validated =
+                security::validator::validate(&llm, &repo_path, &findings, &agent_config).await?;
+            let confirmed = validated
+                .iter()
+                .filter(|v| matches!(v.verdict, security::validator::Verdict::Confirmed))
+                .count();
+            let disputed = validated
+                .iter()
+                .filter(|v| matches!(v.verdict, security::validator::Verdict::Disputed))
+                .count();
+            let dismissed = validated
+                .iter()
+                .filter(|v| matches!(v.verdict, security::validator::Verdict::Dismissed))
+                .count();
+            info!(confirmed, disputed, dismissed, "validation complete");
+
+            let json = serde_json::to_string_pretty(&validated)?;
             write_or_print(&json, output.as_deref())?;
             Ok(())
         }
