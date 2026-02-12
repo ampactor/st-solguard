@@ -155,7 +155,7 @@
             {% endif %}
         </section>
 
-        <!-- Top Findings (Critical + High only) -->
+        <!-- Top Findings (Critical + High, grouped) -->
         {% if !top_findings.is_empty() %}
         <section>
             <h2 class="text-xl font-bold mb-6 text-gray-200">Critical &amp; High Severity Findings</h2>
@@ -164,23 +164,40 @@
                 <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
                     <div class="flex items-start justify-between">
                         <h3 class="font-semibold text-gray-100">{{ f.title }}</h3>
-                        <span class="text-sm font-medium {{ f.severity_class }}">{{ f.severity }}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ f.instance_count }} instances across {{ f.repos.len() }} repos</span>
+                            <span class="text-sm font-medium {{ f.severity_class }}">{{ f.severity }}</span>
+                        </div>
                     </div>
                     <p class="text-gray-400 text-sm mt-2">{{ f.description }}</p>
-                    <div class="mt-2 text-xs text-gray-500">{{ f.file_path }}:{{ f.line_number }}</div>
                     <div class="mt-2 text-sm text-gray-300"><span class="text-gray-500">Fix:</span> {{ f.remediation }}</div>
+                    <div class="mt-2 flex flex-wrap gap-1">
+                        {% for repo in f.repos %}
+                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">{{ repo }}</span>
+                        {% endfor %}
+                    </div>
+                    {% if !f.sample_files.is_empty() %}
+                    <details class="mt-2">
+                        <summary class="text-xs text-gray-500 hover:text-gray-400">Example locations</summary>
+                        <div class="mt-1 space-y-0.5">
+                            {% for path in f.sample_files %}
+                            <div class="text-xs text-gray-600">{{ path }}</div>
+                            {% endfor %}
+                        </div>
+                    </details>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
         </section>
         {% endif %}
 
-        <!-- All Findings (collapsible) -->
-        {% if finding_count > top_findings.len() %}
+        <!-- Remaining Findings (grouped, collapsible) -->
+        {% if !remaining_findings.is_empty() %}
         <section>
             <details>
                 <summary class="text-xl font-bold mb-6 text-gray-200 flex items-center gap-2">
-                    <span class="text-sm bg-gray-800 px-2 py-1 rounded">+{{ remaining_count }} more</span>
+                    <span class="text-sm bg-gray-800 px-2 py-1 rounded">+{{ remaining_count }} patterns</span>
                     All Medium/Low/Info Findings
                 </summary>
                 <div class="space-y-3 mt-4">
@@ -188,9 +205,27 @@
                     <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-800/50">
                         <div class="flex items-start justify-between">
                             <span class="text-sm text-gray-200">{{ f.title }}</span>
-                            <span class="text-xs {{ f.severity_class }}">{{ f.severity }}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">{{ f.instance_count }} instances</span>
+                                <span class="text-xs {{ f.severity_class }}">{{ f.severity }}</span>
+                            </div>
                         </div>
-                        <div class="text-xs text-gray-500 mt-1">{{ f.file_path }}:{{ f.line_number }}</div>
+                        <p class="text-gray-500 text-xs mt-1">{{ f.description }}</p>
+                        <div class="mt-1 flex flex-wrap gap-1">
+                            {% for repo in f.repos %}
+                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">{{ repo }}</span>
+                            {% endfor %}
+                        </div>
+                        {% if !f.sample_files.is_empty() %}
+                        <details class="mt-1">
+                            <summary class="text-xs text-gray-600 hover:text-gray-500">Example locations</summary>
+                            <div class="mt-1 space-y-0.5">
+                                {% for path in f.sample_files %}
+                                <div class="text-xs text-gray-600">{{ path }}</div>
+                                {% endfor %}
+                            </div>
+                        </details>
+                        {% endif %}
                     </div>
                     {% endfor %}
                 </div>

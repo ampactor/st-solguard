@@ -191,12 +191,14 @@ pub async fn collect(config: &SolanaConfig, http: &HttpClient) -> Result<Vec<Sig
         match get_program_activity(&config.rpc_url, http, &program.address).await {
             Ok(activity) => {
                 let title = if activity.tx_per_hour > 0.0 {
+                    let time_str = if activity.time_span_hours < 1.0 {
+                        format!("{:.0}m", activity.time_span_hours * 60.0)
+                    } else {
+                        format!("{:.1}h", activity.time_span_hours)
+                    };
                     format!(
-                        "{}: {:.0} tx/hr ({} txs over {:.1}h)",
-                        program.name,
-                        activity.tx_per_hour,
-                        activity.tx_count,
-                        activity.time_span_hours
+                        "{}: {:.0} tx/hr ({} txs over {})",
+                        program.name, activity.tx_per_hour, activity.tx_count, time_str
                     )
                 } else {
                     format!(
