@@ -26,7 +26,8 @@ pub async fn run_full_pipeline(
 
     // Phase 1: Narrative detection
     info!("Phase 1: Detecting narratives...");
-    let narratives = narrative::run_narrative_pipeline(&config_path, llm_override.as_ref()).await?;
+    let mut narratives =
+        narrative::run_narrative_pipeline(&config_path, llm_override.as_ref()).await?;
     info!(count = narratives.len(), "narratives detected");
 
     // Phase 2: Target selection from narratives
@@ -80,6 +81,40 @@ pub async fn run_full_pipeline(
 
     // Phase 4: Cross-reference narratives with security findings
     info!("Phase 4: Cross-referencing narratives with security findings...");
+    for narrative in &mut narratives {
+        narrative.finding_count = all_findings
+            .iter()
+            .filter(|f| {
+                let path = f.file_path.to_string_lossy();
+                let repo = if let Some(idx) = path.find("repos/") {
+                    let after = &path[idx + 6..];
+                    after.split('/').next().unwrap_or(after).to_string()
+                } else {
+                    f.file_path
+                        .components()
+                        .find_map(|c| {
+                            let s = c.as_os_str().to_string_lossy();
+                            if s != "." && s != ".." && s != "repos" {
+                                Some(s.into_owned())
+                            } else {
+                                None
+                            }
+                        })
+                        .unwrap_or_else(|| "unknown".into())
+                };
+                narrative
+                    .active_repos
+                    .iter()
+                    .any(|ar| ar.split('/').next_back().is_some_and(|tail| tail == repo))
+            })
+            .count();
+        if narrative.finding_count > 0 {
+            info!(
+                "  {} -> {} findings",
+                narrative.title, narrative.finding_count
+            );
+        }
+    }
 
     // Phase 5: Generate combined report
     info!("Phase 5: Generating combined report...");
