@@ -21,9 +21,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare pages directory
+        run: |
+          mkdir -p _pages
+          # Use solguard-report.html as the index page
+          if [ -f solguard-report.html ]; then
+            cp solguard-report.html _pages/index.html
+          elif [ -f index.html ]; then
+            cp index.html _pages/index.html
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_pages'
       - id: deployment
         uses: actions/deploy-pages@v4
