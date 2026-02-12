@@ -8,6 +8,8 @@ pub struct Config {
     pub solana: SolanaConfig,
     #[serde(default)]
     pub social: SocialConfig,
+    #[serde(default)]
+    pub defi_llama: DefiLlamaConfig,
     pub llm: LlmConfig,
 }
 
@@ -61,6 +63,23 @@ pub struct SocialSource {
     #[serde(default = "default_source_type")]
     #[allow(dead_code)]
     pub source_type: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DefiLlamaConfig {
+    #[serde(default = "default_defi_llama_enabled")]
+    pub enabled: bool,
+    #[serde(default = "default_top_protocols")]
+    pub top_protocols: usize,
+}
+
+impl Default for DefiLlamaConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            top_protocols: 10,
+        }
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -122,6 +141,12 @@ fn default_sources() -> Vec<SocialSource> {
 }
 fn default_source_type() -> String {
     "blog".into()
+}
+fn default_defi_llama_enabled() -> bool {
+    true
+}
+fn default_top_protocols() -> usize {
+    10
 }
 fn default_model() -> String {
     "arcee-ai/trinity-large-preview:free".into()

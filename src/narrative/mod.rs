@@ -1,4 +1,5 @@
 mod aggregator;
+mod defi_llama;
 mod github;
 mod social;
 mod solana_rpc;
@@ -41,10 +42,11 @@ pub async fn run_narrative_pipeline(
     let http = HttpClient::new("st-solguard/0.1.0").map_err(|e| anyhow::anyhow!("{e}"))?;
 
     // Collect signals from all sources in parallel
-    let (github_result, solana_result, social_result) = tokio::join!(
+    let (github_result, solana_result, social_result, defi_llama_result) = tokio::join!(
         github::collect(&config.github, &http),
         solana_rpc::collect(&config.solana, &http),
         social::collect(&config.social, &http),
+        defi_llama::collect(&config.defi_llama, &http),
     );
 
     let mut signals = Vec::new();
@@ -66,6 +68,11 @@ pub async fn run_narrative_pipeline(
     match social_result {
         Ok(sigs) => signals.extend(sigs),
         Err(e) => tracing::warn!(error = %e, "Social signal collection failed"),
+    }
+
+    match defi_llama_result {
+        Ok(sigs) => signals.extend(sigs),
+        Err(e) => tracing::warn!(error = %e, "DeFiLlama signal collection failed"),
     }
 
     info!(
