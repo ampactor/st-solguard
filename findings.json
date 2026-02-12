@@ -1,0 +1,1242 @@
+[
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/admin/update_amm_config.rs",
+    "line_number": 64,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/admin/update_amm_config.rs",
+    "line_number": 74,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/create_pool.rs",
+    "line_number": 123,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/decrease_liquidity.rs",
+    "line_number": 115,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/decrease_liquidity.rs",
+    "line_number": 439,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/initialize_reward.rs",
+    "line_number": 96,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/open_position.rs",
+    "line_number": 388,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap.rs",
+    "line_number": 128,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap.rs",
+    "line_number": 552,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap_v2.rs",
+    "line_number": 78,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap.rs",
+    "line_number": 900,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs",
+    "line_number": 848,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs",
+    "line_number": 1119,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs",
+    "line_number": 1196,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs",
+    "line_number": 1295,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs",
+    "line_number": 1383,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs",
+    "line_number": 1441,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs",
+    "line_number": 1544,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/tick_array.rs",
+    "line_number": 33,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/tick_array.rs",
+    "line_number": 58,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/tickarray_bitmap_extension.rs",
+    "line_number": 48,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/util/token.rs",
+    "line_number": 258,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/admin/update_amm_config.rs",
+    "line_number": 24,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/admin/update_amm_config.rs",
+    "line_number": 28,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/decrease_liquidity.rs",
+    "line_number": 162,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/decrease_liquidity.rs",
+    "line_number": 464,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/decrease_liquidity.rs",
+    "line_number": 465,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/decrease_liquidity.rs",
+    "line_number": 468,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/decrease_liquidity.rs",
+    "line_number": 471,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/decrease_liquidity.rs",
+    "line_number": 477,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/decrease_liquidity.rs",
+    "line_number": 541,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/increase_liquidity.rs",
+    "line_number": 167,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/increase_liquidity.rs",
+    "line_number": 170,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/open_position.rs",
+    "line_number": 314,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/open_position.rs",
+    "line_number": 317,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/set_reward_params.rs",
+    "line_number": 102,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/set_reward_params.rs",
+    "line_number": 105,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/set_reward_params.rs",
+    "line_number": 107,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/set_reward_params.rs",
+    "line_number": 109,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap.rs",
+    "line_number": 592,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap_router_base_in.rs",
+    "line_number": 44,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap_router_base_in.rs",
+    "line_number": 45,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap_router_base_in.rs",
+    "line_number": 48,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap_router_base_in.rs",
+    "line_number": 53,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap_router_base_in.rs",
+    "line_number": 55,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap_router_base_in.rs",
+    "line_number": 58,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap_router_base_in.rs",
+    "line_number": 61,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap_router_base_in.rs",
+    "line_number": 64,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap_router_base_in.rs",
+    "line_number": 67,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap_router_base_in.rs",
+    "line_number": 78,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap_v2.rs",
+    "line_number": 131,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/operation_account.rs",
+    "line_number": 252,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/oracle.rs",
+    "line_number": 207,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs",
+    "line_number": 1794,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/tick_array.rs",
+    "line_number": 1397,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/tickarray_bitmap_extension.rs",
+    "line_number": 698,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/util/account_load.rs",
+    "line_number": 124,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/util/token.rs",
+    "line_number": 255,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/util/token.rs",
+    "line_number": 263,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/util/token.rs",
+    "line_number": 269,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-cp-swap/programs/cp-swap/src/instructions/admin/update_config.rs",
+    "line_number": 63,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-cp-swap/programs/cp-swap/src/instructions/admin/update_config.rs",
+    "line_number": 75,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-cp-swap/programs/cp-swap/src/instructions/deposit.rs",
+    "line_number": 87,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-cp-swap/programs/cp-swap/src/instructions/initialize.rs",
+    "line_number": 164,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-cp-swap/programs/cp-swap/src/instructions/initialize_with_permission.rs",
+    "line_number": 175,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-cp-swap/programs/cp-swap/src/instructions/swap_base_input.rs",
+    "line_number": 75,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-cp-swap/programs/cp-swap/src/instructions/swap_base_output.rs",
+    "line_number": 9,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "Verbose Error Logging May Leak Account Keys",
+    "severity": "Low",
+    "description": "Function logs account keys via msg!(). This may leak sensitive information.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-cp-swap/programs/cp-swap/src/instructions/withdraw.rs",
+    "line_number": 99,
+    "remediation": "Use error codes instead of logging raw keys."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-cp-swap/programs/cp-swap/src/instructions/initialize.rs",
+    "line_number": 350,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-cp-swap/programs/cp-swap/src/instructions/admin/update_config.rs",
+    "line_number": 25,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-cp-swap/programs/cp-swap/src/instructions/admin/update_config.rs",
+    "line_number": 29,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/raydium-cp-swap/programs/cp-swap/src/utils/account_load.rs",
+    "line_number": 126,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/accounts/oracle.rs",
+    "line_number": 315,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/accounts/oracle.rs",
+    "line_number": 322,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/accounts/state.rs",
+    "line_number": 93,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/accounts/state.rs",
+    "line_number": 104,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/oracle_heartbeat.rs",
+    "line_number": 83,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/oracle_heartbeat.rs",
+    "line_number": 91,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/oracle_heartbeat.rs",
+    "line_number": 132,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/oracle_heartbeat.rs",
+    "line_number": 141,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/oracle_sync_lut.rs",
+    "line_number": 110,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/oracle_sync_lut.rs",
+    "line_number": 118,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/oracle_sync_lut.rs",
+    "line_number": 126,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/queue_pay_subsidy.rs",
+    "line_number": 67,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/queue_reset_lut.rs",
+    "line_number": 65,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/queue_reset_lut.rs",
+    "line_number": 96,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/mod.rs",
+    "line_number": 79,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/oracle_quote/quote.rs",
+    "line_number": 665,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/oracle_quote/quote_account.rs",
+    "line_number": 381,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/sysvar/address_lookup_table.rs",
+    "line_number": 14,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/utils.rs",
+    "line_number": 37,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "Unsafe Block in Solana Program",
+    "severity": "High",
+    "description": "Function contains an unsafe block. Requires careful review for memory safety.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/instruction_compat.rs",
+    "line_number": 73,
+    "remediation": "Review unsafe block for soundness. Consider safe alternatives."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/macros.rs",
+    "line_number": 158,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/macros.rs",
+    "line_number": 175,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/accounts/oracle.rs",
+    "line_number": 206,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/accounts/oracle.rs",
+    "line_number": 357,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/accounts/pull_feed.rs",
+    "line_number": 297,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/accounts/queue.rs",
+    "line_number": 224,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/accounts/queue.rs",
+    "line_number": 315,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/accounts/randomness.rs",
+    "line_number": 95,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/queue_pay_rewards.rs",
+    "line_number": 72,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/queue_pay_rewards.rs",
+    "line_number": 101,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/queue_pay_rewards.rs",
+    "line_number": 102,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/queue_pay_subsidy.rs",
+    "line_number": 83,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/queue_pay_subsidy.rs",
+    "line_number": 111,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/queue_pay_subsidy.rs",
+    "line_number": 112,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/queue_pay_subsidy.rs",
+    "line_number": 119,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/instructions/queue_pay_subsidy.rs",
+    "line_number": 120,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unsafe Block in Solana Program",
+    "severity": "High",
+    "description": "Function contains an unsafe block. Requires careful review for memory safety.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/oracle_quote/feed_info.rs",
+    "line_number": 182,
+    "remediation": "Review unsafe block for soundness. Consider safe alternatives."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/oracle_quote/instruction_parser.rs",
+    "line_number": 181,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/oracle_quote/instruction_parser.rs",
+    "line_number": 190,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/oracle_quote/quote_account.rs",
+    "line_number": 196,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Unsafe Block in Solana Program",
+    "severity": "High",
+    "description": "Function contains an unsafe block. Requires careful review for memory safety.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/oracle_quote/quote_verifier.rs",
+    "line_number": 1252,
+    "remediation": "Review unsafe block for soundness. Consider safe alternatives."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/smallvec.rs",
+    "line_number": 323,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/smallvec.rs",
+    "line_number": 341,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/sysvar/address_lookup_table.rs",
+    "line_number": 29,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Unsafe Block in Solana Program",
+    "severity": "High",
+    "description": "Function contains an unsafe block. Requires careful review for memory safety.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/sysvar/clock.rs",
+    "line_number": 35,
+    "remediation": "Review unsafe block for soundness. Consider safe alternatives."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/sysvar/clock.rs",
+    "line_number": 61,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Unsafe Block in Solana Program",
+    "severity": "High",
+    "description": "Function contains an unsafe block. Requires careful review for memory safety.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/test_ids.rs",
+    "line_number": 6,
+    "remediation": "Review unsafe block for soundness. Consider safe alternatives."
+  },
+  {
+    "title": "Unsafe Block in Solana Program",
+    "severity": "High",
+    "description": "Function contains an unsafe block. Requires careful review for memory safety.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/utils.rs",
+    "line_number": 68,
+    "remediation": "Review unsafe block for soundness. Consider safe alternatives."
+  },
+  {
+    "title": "Unsafe Block in Solana Program",
+    "severity": "High",
+    "description": "Function contains an unsafe block. Requires careful review for memory safety.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/utils.rs",
+    "line_number": 80,
+    "remediation": "Review unsafe block for soundness. Consider safe alternatives."
+  },
+  {
+    "title": "Unsafe Block in Solana Program",
+    "severity": "High",
+    "description": "Function contains an unsafe block. Requires careful review for memory safety.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/utils.rs",
+    "line_number": 86,
+    "remediation": "Review unsafe block for soundness. Consider safe alternatives."
+  },
+  {
+    "title": "Unsafe Block in Solana Program",
+    "severity": "High",
+    "description": "Function contains an unsafe block. Requires careful review for memory safety.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/switchboard/src/utils.rs",
+    "line_number": 111,
+    "remediation": "Review unsafe block for soundness. Consider safe alternatives."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/shared.rs",
+    "line_number": 21,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/shared.rs",
+    "line_number": 102,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "PDA Bump Seed Not Stored/Verified",
+    "severity": "Medium",
+    "description": "PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/shared.rs",
+    "line_number": 125,
+    "remediation": "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/compressed/buy.rs",
+    "line_number": 155,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/compressed/buy.rs",
+    "line_number": 174,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/compressed/buy_spl.rs",
+    "line_number": 201,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/compressed/buy_spl.rs",
+    "line_number": 220,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/compressed/buy_spl.rs",
+    "line_number": 221,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/compressed/list.rs",
+    "line_number": 72,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/compressed/take_bid.rs",
+    "line_number": 187,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/compressed/take_bid.rs",
+    "line_number": 312,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/legacy/buy.rs",
+    "line_number": 331,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/legacy/buy_spl.rs",
+    "line_number": 274,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/mpl_core/buy.rs",
+    "line_number": 148,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/mpl_core/buy.rs",
+    "line_number": 258,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/mpl_core/buy_spl.rs",
+    "line_number": 312,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/mpl_core/buy_spl.rs",
+    "line_number": 316,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/token22/buy.rs",
+    "line_number": 195,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/token22/buy.rs",
+    "line_number": 210,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/token22/buy_spl.rs",
+    "line_number": 282,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/token22/buy_spl.rs",
+    "line_number": 308,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/token22/buy_spl.rs",
+    "line_number": 317,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/token22/buy_spl.rs",
+    "line_number": 406,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/token22/close_expired_listing.rs",
+    "line_number": 93,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/token22/delist.rs",
+    "line_number": 97,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/token22/list.rs",
+    "line_number": 74,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/token22/take_bid.rs",
+    "line_number": 237,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Unvalidated remaining_accounts Usage",
+    "severity": "High",
+    "description": "Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/token22/take_bid.rs",
+    "line_number": 252,
+    "remediation": "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/shared.rs",
+    "line_number": 84,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Type Cosplay (Missing Discriminator)",
+    "severity": "High",
+    "description": "Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/shared.rs",
+    "line_number": 152,
+    "remediation": "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator."
+  },
+  {
+    "title": "Potential Arbitrary CPI Target",
+    "severity": "Critical",
+    "description": "Cross-program invocation where the target program ID may come from user input. Attacker could redirect the CPI to a malicious program.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/noop.rs",
+    "line_number": 52,
+    "remediation": "Hardcode the target program ID or validate it against a known constant."
+  },
+  {
+    "title": "Potential Arbitrary CPI Target",
+    "severity": "Critical",
+    "description": "Cross-program invocation where the target program ID may come from user input. Attacker could redirect the CPI to a malicious program.",
+    "file_path": "/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/noop.rs",
+    "line_number": 68,
+    "remediation": "Hardcode the target program ID or validate it against a known constant."
+  }
+]
