@@ -42,7 +42,7 @@ CLI → Agent Orchestrator
   Phase 1: Narrative Detection (GitHub + Solana RPC + Social signals → LLM synthesis)
   Phase 2: Target Selection (repos from narratives)
   Phase 3: Clone + Security Scanning (regex + AST patterns)
-  Phase 4: Cross-Reference (narratives × findings)
+  Phase 4: Cross-Reference (count findings per narrative's active repos via trailing path component matching)
   Phase 5: Combined HTML Report (Askama template)
 ```
 
