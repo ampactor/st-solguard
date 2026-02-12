@@ -90,7 +90,7 @@ pub async fn run_narrative_pipeline(
 
     // Aggregate signals
     let groups = aggregator::aggregate(&signals);
-    let signals_json = aggregator::signals_to_json(&signals, &groups);
+    let signals_json = aggregator::signals_to_json(&signals, &groups, &repo_names);
 
     // Synthesize narratives via LLM
     let llm = LlmClient::from_config(
@@ -106,7 +106,7 @@ pub async fn run_narrative_pipeline(
         .await
         .map_err(|e| anyhow::anyhow!("{e}"))?;
 
-    // Map to solguard Narrative type, attaching discovered repos
+    // Map to solguard Narrative type with LLM-assigned repos
     let narratives = synthesized
         .into_iter()
         .map(|n| Narrative {
@@ -114,7 +114,7 @@ pub async fn run_narrative_pipeline(
             summary: n.summary,
             confidence: n.confidence,
             trend: n.trend.to_string(),
-            active_repos: repo_names.clone(),
+            active_repos: n.active_repos,
             finding_count: 0,
         })
         .collect();

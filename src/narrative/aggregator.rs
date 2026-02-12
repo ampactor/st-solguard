@@ -58,7 +58,11 @@ pub fn aggregate(signals: &[Signal]) -> Vec<SignalGroup> {
     groups
 }
 
-pub fn signals_to_json(signals: &[Signal], groups: &[SignalGroup]) -> String {
+pub fn signals_to_json(
+    signals: &[Signal],
+    groups: &[SignalGroup],
+    discovered_repos: &[String],
+) -> String {
     let summary: Vec<serde_json::Value> = groups
         .iter()
         .map(|g| {
@@ -93,5 +97,9 @@ pub fn signals_to_json(signals: &[Signal], groups: &[SignalGroup]) -> String {
         })
         .collect();
 
-    serde_json::to_string_pretty(&summary).unwrap_or_else(|_| "[]".into())
+    let output = serde_json::json!({
+        "signal_groups": summary,
+        "discovered_repos": discovered_repos,
+    });
+    serde_json::to_string_pretty(&output).unwrap_or_else(|_| "{}".into())
 }
