@@ -67,5 +67,5 @@ max_tokens = 4096
 
 # For premium runs (submission quality):
 # provider = "anthropic"
-# model = "claude-sonnet-4-5-20250929"
+# model = "claude-opus-4-6"
 # api_key_env = "ANTHROPIC_API_KEY"

@@ -11,6 +11,30 @@ use anyhow::Result;
 use clap::Parser;
 use std::path::PathBuf;
 
+/// CLI override for LLM provider/model.
+pub struct LlmOverride {
+    pub provider: llm::Provider,
+    pub model: String,
+}
+
+fn make_llm_override(provider: Option<String>, model: Option<String>) -> Option<LlmOverride> {
+    if provider.is_none() && model.is_none() {
+        return None;
+    }
+    let provider = provider
+        .map(|p| match p.as_str() {
+            "anthropic" => llm::Provider::Anthropic,
+            "openai" => llm::Provider::OpenAi,
+            _ => llm::Provider::OpenRouter,
+        })
+        .unwrap_or_default();
+    let model = model.unwrap_or_else(|| match &provider {
+        llm::Provider::Anthropic => "claude-opus-4-6".into(),
+        _ => "arcee-ai/trinity-large-preview:free".into(),
+    });
+    Some(LlmOverride { provider, model })
+}
+
 #[derive(Parser)]
 #[command(
     name = "solguard",
@@ -36,6 +60,14 @@ enum Command {
         /// Directory to clone repos into for scanning
         #[arg(long, default_value = "repos")]
         repos_dir: PathBuf,
+
+        /// LLM provider override: anthropic, openrouter, openai
+        #[arg(long)]
+        provider: Option<String>,
+
+        /// LLM model override
+        #[arg(long)]
+        model: Option<String>,
     },
 
     /// Run narrative detection only
@@ -43,6 +75,14 @@ enum Command {
         /// Path to config file
         #[arg(short, long, default_value = "config.toml")]
         config: PathBuf,
+
+        /// LLM provider override: anthropic, openrouter, openai
+        #[arg(long)]
+        provider: Option<String>,
+
+        /// LLM model override
+        #[arg(long)]
+        model: Option<String>,
     },
 
     /// Scan a specific repo for vulnerabilities
@@ -71,9 +111,20 @@ async fn main() -> Result<()> {
             config,
             output,
             repos_dir,
-        } => agent::run_full_pipeline(config, output, repos_dir).await,
-        Command::Narratives { config } => {
-            let narratives = narrative::run_narrative_pipeline(&config).await?;
+            provider,
+            model,
+        } => {
+            let llm_override = make_llm_override(provider, model);
+            agent::run_full_pipeline(config, output, repos_dir, llm_override).await
+        }
+        Command::Narratives {
+            config,
+            provider,
+            model,
+        } => {
+            let llm_override = make_llm_override(provider, model);
+            let narratives =
+                narrative::run_narrative_pipeline(&config, llm_override.as_ref()).await?;
             let json = serde_json::to_string_pretty(&narratives)?;
             println!("{json}");
             Ok(())
