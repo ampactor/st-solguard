@@ -60,6 +60,10 @@ name = "Marinade Blog"
 url = "https://blog.marinade.finance/"
 source_type = "blog"
 
+[defi_llama]
+enabled = true
+top_protocols = 10
+
 [llm]
 provider = "openrouter"
 model = "arcee-ai/trinity-large-preview:free"
