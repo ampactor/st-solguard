@@ -19,8 +19,8 @@ struct SolGuardReport {
     severity_info: usize,
     narratives: Vec<NarrativeView>,
     repo_summaries: Vec<RepoSummary>,
-    top_findings: Vec<FindingView>,
-    remaining_findings: Vec<FindingView>,
+    top_findings: Vec<GroupedFindingView>,
+    remaining_findings: Vec<GroupedFindingView>,
     remaining_count: usize,
 }
 
@@ -34,14 +34,15 @@ struct NarrativeView {
 }
 
 #[allow(dead_code)] // fields used by Askama template
-struct FindingView {
+struct GroupedFindingView {
     title: String,
     severity: String,
     severity_class: String,
     description: String,
-    file_path: String,
-    line_number: usize,
     remediation: String,
+    instance_count: usize,
+    repos: Vec<String>,
+    sample_files: Vec<String>,
 }
 
 #[allow(dead_code)] // fields used by Askama template
@@ -64,15 +65,13 @@ fn severity_class(severity: &str) -> String {
     }
 }
 
-fn to_finding_view(f: &SecurityFinding) -> FindingView {
-    FindingView {
-        title: f.title.clone(),
-        severity: f.severity.clone(),
-        severity_class: severity_class(&f.severity),
-        description: f.description.clone(),
-        file_path: f.file_path.display().to_string(),
-        line_number: f.line_number,
-        remediation: f.remediation.clone(),
+fn severity_order(severity: &str) -> u8 {
+    match severity {
+        "Critical" => 0,
+        "High" => 1,
+        "Medium" => 2,
+        "Low" => 3,
+        _ => 4,
     }
 }
 
@@ -99,6 +98,56 @@ fn repo_name(f: &SecurityFinding) -> String {
             }
         })
         .unwrap_or_else(|| "unknown".into())
+}
+
+fn group_findings(findings: &[SecurityFinding]) -> Vec<GroupedFindingView> {
+    // Group by (title, severity)
+    let mut groups: BTreeMap<(String, String), Vec<&SecurityFinding>> = BTreeMap::new();
+    for f in findings {
+        groups
+            .entry((f.title.clone(), f.severity.clone()))
+            .or_default()
+            .push(f);
+    }
+
+    let mut result: Vec<GroupedFindingView> = groups
+        .into_iter()
+        .map(|((title, severity), instances)| {
+            let mut repos: Vec<String> = instances
+                .iter()
+                .map(|f| repo_name(f))
+                .collect::<std::collections::BTreeSet<_>>()
+                .into_iter()
+                .collect();
+            repos.sort();
+
+            let sample_files: Vec<String> = instances
+                .iter()
+                .take(3)
+                .map(|f| format!("{}:{}", f.file_path.display(), f.line_number))
+                .collect();
+
+            GroupedFindingView {
+                title,
+                severity_class: severity_class(&severity),
+                description: instances[0].description.clone(),
+                remediation: instances[0].remediation.clone(),
+                instance_count: instances.len(),
+                repos,
+                sample_files,
+                severity,
+            }
+        })
+        .collect();
+
+    // Sort by severity (Critical first), then by instance count descending
+    result.sort_by(|a, b| {
+        severity_order(&a.severity)
+            .cmp(&severity_order(&b.severity))
+            .then(b.instance_count.cmp(&a.instance_count))
+    });
+
+    result
 }
 
 pub fn render_combined_report(
@@ -153,18 +202,20 @@ pub fn render_combined_report(
 
     let repo_count = repo_summaries.len();
 
-    // Split findings: top (Critical/High) vs remaining
-    let top_findings: Vec<FindingView> = findings
+    // Group findings: top (Critical/High) vs remaining
+    let top_findings_raw: Vec<SecurityFinding> = findings
         .iter()
         .filter(|f| f.severity == "Critical" || f.severity == "High")
-        .map(to_finding_view)
+        .cloned()
         .collect();
+    let top_findings = group_findings(&top_findings_raw);
 
-    let remaining_findings: Vec<FindingView> = findings
+    let remaining_findings_raw: Vec<SecurityFinding> = findings
         .iter()
         .filter(|f| f.severity != "Critical" && f.severity != "High")
-        .map(to_finding_view)
+        .cloned()
         .collect();
+    let remaining_findings = group_findings(&remaining_findings_raw);
 
     let remaining_count = remaining_findings.len();
 
