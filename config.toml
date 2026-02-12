@@ -73,3 +73,8 @@ max_tokens = 4096
 # provider = "anthropic"
 # model = "claude-opus-4-6"
 # api_key_env = "ANTHROPIC_API_KEY"
+
+[agent_review]
+max_turns = 30
+max_tokens = 8192
+cost_limit_usd = 20.0

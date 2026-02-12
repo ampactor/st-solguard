@@ -1,6 +1,7 @@
 use crate::error::{Error, Result};
 use crate::http::HttpClient;
 use serde::{Deserialize, Serialize};
+use serde_json::{Value, json};
 use tracing::{debug, warn};
 
 /// LLM provider — determines API format and endpoint.
@@ -33,6 +34,71 @@ impl Provider {
     }
 }
 
+// -- Shared conversation types for multi-turn tool use --
+
+/// Tool definition passed to the LLM.
+#[derive(Debug, Clone, Serialize)]
+pub struct ToolDef {
+    pub name: String,
+    pub description: String,
+    pub input_schema: Value,
+}
+
+/// Content block in a conversation message.
+#[derive(Debug, Clone)]
+pub enum ContentBlock {
+    Text {
+        text: String,
+    },
+    ToolUse {
+        id: String,
+        name: String,
+        input: Value,
+    },
+    ToolResult {
+        tool_use_id: String,
+        content: String,
+        is_error: bool,
+    },
+}
+
+/// Role in a conversation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Role {
+    User,
+    Assistant,
+}
+
+/// A message in a multi-turn conversation.
+#[derive(Debug, Clone)]
+pub struct ConversationMessage {
+    pub role: Role,
+    pub content: Vec<ContentBlock>,
+}
+
+/// Why the LLM stopped generating.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StopReason {
+    EndTurn,
+    ToolUse,
+    MaxTokens,
+}
+
+/// Token usage from a single API call.
+#[derive(Debug, Clone, Default)]
+pub struct Usage {
+    pub input_tokens: u32,
+    pub output_tokens: u32,
+}
+
+/// Response from a multi-turn conversation call.
+#[derive(Debug)]
+pub struct ConversationResponse {
+    pub content: Vec<ContentBlock>,
+    pub stop_reason: StopReason,
+    pub usage: Usage,
+}
+
 pub struct LlmClient {
     provider: Provider,
     api_key: String,
@@ -42,7 +108,7 @@ pub struct LlmClient {
     http: HttpClient,
 }
 
-// -- Anthropic format --
+// -- Anthropic simple completion wire types --
 
 #[derive(Serialize)]
 struct AnthropicRequest<'a> {
@@ -62,7 +128,25 @@ struct AnthropicBlock {
     text: Option<String>,
 }
 
-// -- OpenAI-compatible format --
+// -- Anthropic conversation wire types --
+
+#[derive(Deserialize)]
+struct AnthropicConvResponse {
+    content: Vec<Value>,
+    stop_reason: Option<String>,
+    #[serde(default)]
+    usage: AnthropicUsage,
+}
+
+#[derive(Deserialize, Default)]
+struct AnthropicUsage {
+    #[serde(default)]
+    input_tokens: u32,
+    #[serde(default)]
+    output_tokens: u32,
+}
+
+// -- OpenAI-compatible simple completion wire types --
 
 #[derive(Serialize)]
 struct OpenAiRequest<'a> {
@@ -86,7 +170,48 @@ struct OpenAiMessage {
     content: String,
 }
 
-// -- Shared --
+// -- OpenAI conversation wire types --
+
+#[derive(Deserialize)]
+struct OpenAiConvResponse {
+    choices: Vec<OpenAiConvChoice>,
+    usage: Option<OpenAiConvUsage>,
+}
+
+#[derive(Deserialize)]
+struct OpenAiConvChoice {
+    message: OpenAiConvMessage,
+    finish_reason: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct OpenAiConvMessage {
+    content: Option<String>,
+    #[serde(default)]
+    tool_calls: Option<Vec<OpenAiToolCall>>,
+}
+
+#[derive(Deserialize)]
+struct OpenAiToolCall {
+    id: String,
+    function: OpenAiToolCallFn,
+}
+
+#[derive(Deserialize)]
+struct OpenAiToolCallFn {
+    name: String,
+    arguments: String,
+}
+
+#[derive(Deserialize)]
+struct OpenAiConvUsage {
+    #[serde(default)]
+    prompt_tokens: u32,
+    #[serde(default)]
+    completion_tokens: u32,
+}
+
+// -- Shared simple message --
 
 #[derive(Serialize)]
 struct Msg<'a> {
@@ -126,6 +251,12 @@ impl LlmClient {
         let api_key = std::env::var(&env_var).unwrap_or_default();
         Self::new(provider, api_key, model, max_tokens, base_url)
     }
+
+    pub fn model(&self) -> &str {
+        &self.model
+    }
+
+    // -- Simple single-turn completion (used by narrative synthesis) --
 
     pub async fn complete(&self, system: &str, user_message: &str) -> Result<String> {
         debug!(provider = ?self.provider, model = %self.model, "sending LLM request");
@@ -234,6 +365,345 @@ impl LlmClient {
             .map(|c| c.message.content)
             .ok_or_else(|| Error::parse("empty response from LLM"))
     }
+
+    // -- Multi-turn conversation with tool use --
+
+    /// Send a multi-turn conversation to the LLM with tool definitions.
+    ///
+    /// The caller manages conversation history and tool dispatch. This method
+    /// handles wire format translation for both Anthropic and OpenAI providers.
+    pub async fn converse(
+        &self,
+        system: &str,
+        messages: &[ConversationMessage],
+        tools: &[ToolDef],
+    ) -> Result<ConversationResponse> {
+        debug!(
+            provider = ?self.provider,
+            model = %self.model,
+            turns = messages.len(),
+            "converse"
+        );
+        match self.provider {
+            Provider::Anthropic => self.converse_anthropic(system, messages, tools).await,
+            Provider::OpenRouter | Provider::OpenAi => {
+                self.converse_openai(system, messages, tools).await
+            }
+        }
+    }
+
+    async fn converse_anthropic(
+        &self,
+        system: &str,
+        messages: &[ConversationMessage],
+        tools: &[ToolDef],
+    ) -> Result<ConversationResponse> {
+        let wire_messages = Self::messages_to_anthropic(messages);
+        let wire_tools: Vec<Value> = tools
+            .iter()
+            .map(|t| {
+                json!({
+                    "name": &t.name,
+                    "description": &t.description,
+                    "input_schema": &t.input_schema,
+                })
+            })
+            .collect();
+
+        let mut body = json!({
+            "model": &self.model,
+            "max_tokens": self.max_tokens,
+            "system": system,
+            "messages": wire_messages,
+        });
+        if !wire_tools.is_empty() {
+            body["tools"] = json!(wire_tools);
+        }
+
+        let body_str = serde_json::to_string(&body)
+            .map_err(|e| Error::parse(format!("serialize converse request: {e}")))?;
+
+        let url = format!("{}/messages", self.base_url);
+        let response_text = self
+            .http
+            .post_json_raw(
+                &url,
+                &body_str,
+                &[
+                    ("x-api-key", &self.api_key),
+                    ("anthropic-version", "2023-06-01"),
+                ],
+            )
+            .await
+            .map_err(|e| {
+                warn!("Anthropic converse error: {e}");
+                e
+            })?;
+
+        let resp: AnthropicConvResponse = serde_json::from_str(&response_text).map_err(|e| {
+            Error::parse(format!(
+                "parse Anthropic converse response: {e}\nraw: {response_text}"
+            ))
+        })?;
+
+        let content = resp
+            .content
+            .into_iter()
+            .filter_map(Self::parse_anthropic_content_block)
+            .collect();
+        let stop_reason = match resp.stop_reason.as_deref() {
+            Some("tool_use") => StopReason::ToolUse,
+            Some("max_tokens") => StopReason::MaxTokens,
+            _ => StopReason::EndTurn,
+        };
+        let usage = Usage {
+            input_tokens: resp.usage.input_tokens,
+            output_tokens: resp.usage.output_tokens,
+        };
+
+        Ok(ConversationResponse {
+            content,
+            stop_reason,
+            usage,
+        })
+    }
+
+    fn messages_to_anthropic(messages: &[ConversationMessage]) -> Vec<Value> {
+        messages
+            .iter()
+            .map(|msg| {
+                let role = match msg.role {
+                    Role::User => "user",
+                    Role::Assistant => "assistant",
+                };
+                let content: Vec<Value> = msg
+                    .content
+                    .iter()
+                    .map(|block| match block {
+                        ContentBlock::Text { text } => {
+                            json!({"type": "text", "text": text})
+                        }
+                        ContentBlock::ToolUse { id, name, input } => {
+                            json!({"type": "tool_use", "id": id, "name": name, "input": input})
+                        }
+                        ContentBlock::ToolResult {
+                            tool_use_id,
+                            content,
+                            is_error,
+                        } => {
+                            let mut v = json!({
+                                "type": "tool_result",
+                                "tool_use_id": tool_use_id,
+                                "content": content,
+                            });
+                            if *is_error {
+                                v["is_error"] = json!(true);
+                            }
+                            v
+                        }
+                    })
+                    .collect();
+                json!({"role": role, "content": content})
+            })
+            .collect()
+    }
+
+    fn parse_anthropic_content_block(v: Value) -> Option<ContentBlock> {
+        let typ = v.get("type")?.as_str()?;
+        match typ {
+            "text" => Some(ContentBlock::Text {
+                text: v.get("text")?.as_str()?.to_string(),
+            }),
+            "tool_use" => Some(ContentBlock::ToolUse {
+                id: v.get("id")?.as_str()?.to_string(),
+                name: v.get("name")?.as_str()?.to_string(),
+                input: v.get("input")?.clone(),
+            }),
+            _ => None,
+        }
+    }
+
+    async fn converse_openai(
+        &self,
+        system: &str,
+        messages: &[ConversationMessage],
+        tools: &[ToolDef],
+    ) -> Result<ConversationResponse> {
+        let wire_messages = Self::messages_to_openai(system, messages);
+        let wire_tools: Vec<Value> = tools
+            .iter()
+            .map(|t| {
+                json!({
+                    "type": "function",
+                    "function": {
+                        "name": &t.name,
+                        "description": &t.description,
+                        "parameters": &t.input_schema,
+                    }
+                })
+            })
+            .collect();
+
+        let mut body = json!({
+            "model": &self.model,
+            "max_tokens": self.max_tokens,
+            "messages": wire_messages,
+        });
+        if !wire_tools.is_empty() {
+            body["tools"] = json!(wire_tools);
+        }
+
+        let body_str = serde_json::to_string(&body)
+            .map_err(|e| Error::parse(format!("serialize converse request: {e}")))?;
+
+        let url = format!("{}/chat/completions", self.base_url);
+        let response_text = self
+            .http
+            .post_json_raw(
+                &url,
+                &body_str,
+                &[("Authorization", &format!("Bearer {}", self.api_key))],
+            )
+            .await
+            .map_err(|e| {
+                warn!("OpenAI converse error: {e}");
+                e
+            })?;
+
+        let resp: OpenAiConvResponse = serde_json::from_str(&response_text).map_err(|e| {
+            Error::parse(format!(
+                "parse OpenAI converse response: {e}\nraw: {response_text}"
+            ))
+        })?;
+
+        let choice = resp
+            .choices
+            .into_iter()
+            .next()
+            .ok_or_else(|| Error::parse("empty choices in converse response"))?;
+
+        let mut content = Vec::new();
+        if let Some(text) = choice.message.content
+            && !text.is_empty()
+        {
+            content.push(ContentBlock::Text { text });
+        }
+        if let Some(tool_calls) = choice.message.tool_calls {
+            for tc in tool_calls {
+                let input: Value = serde_json::from_str(&tc.function.arguments)
+                    .unwrap_or_else(|_| json!({"_raw": tc.function.arguments}));
+                content.push(ContentBlock::ToolUse {
+                    id: tc.id,
+                    name: tc.function.name,
+                    input,
+                });
+            }
+        }
+
+        let stop_reason = match choice.finish_reason.as_deref() {
+            Some("tool_calls") => StopReason::ToolUse,
+            Some("length") => StopReason::MaxTokens,
+            _ => StopReason::EndTurn,
+        };
+        let usage = resp
+            .usage
+            .map(|u| Usage {
+                input_tokens: u.prompt_tokens,
+                output_tokens: u.completion_tokens,
+            })
+            .unwrap_or_default();
+
+        Ok(ConversationResponse {
+            content,
+            stop_reason,
+            usage,
+        })
+    }
+
+    fn messages_to_openai(system: &str, messages: &[ConversationMessage]) -> Vec<Value> {
+        let mut wire = vec![json!({"role": "system", "content": system})];
+
+        for msg in messages {
+            match msg.role {
+                Role::User => {
+                    // Tool results → separate "tool" role messages
+                    let tool_results: Vec<_> = msg
+                        .content
+                        .iter()
+                        .filter_map(|b| match b {
+                            ContentBlock::ToolResult {
+                                tool_use_id,
+                                content,
+                                ..
+                            } => Some((tool_use_id, content)),
+                            _ => None,
+                        })
+                        .collect();
+
+                    if !tool_results.is_empty() {
+                        for (tool_use_id, content) in tool_results {
+                            wire.push(json!({
+                                "role": "tool",
+                                "tool_call_id": tool_use_id,
+                                "content": content,
+                            }));
+                        }
+                    } else {
+                        let text: String = msg
+                            .content
+                            .iter()
+                            .filter_map(|b| match b {
+                                ContentBlock::Text { text } => Some(text.as_str()),
+                                _ => None,
+                            })
+                            .collect::<Vec<_>>()
+                            .join("\n");
+                        wire.push(json!({"role": "user", "content": text}));
+                    }
+                }
+                Role::Assistant => {
+                    let text: String = msg
+                        .content
+                        .iter()
+                        .filter_map(|b| match b {
+                            ContentBlock::Text { text } => Some(text.clone()),
+                            _ => None,
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n");
+
+                    let tool_calls: Vec<Value> = msg
+                        .content
+                        .iter()
+                        .filter_map(|b| match b {
+                            ContentBlock::ToolUse { id, name, input } => Some(json!({
+                                "id": id,
+                                "type": "function",
+                                "function": {
+                                    "name": name,
+                                    "arguments": input.to_string(),
+                                },
+                            })),
+                            _ => None,
+                        })
+                        .collect();
+
+                    let mut message = json!({"role": "assistant"});
+                    if !text.is_empty() {
+                        message["content"] = json!(text);
+                    } else {
+                        message["content"] = Value::Null;
+                    }
+                    if !tool_calls.is_empty() {
+                        message["tool_calls"] = json!(tool_calls);
+                    }
+                    wire.push(message);
+                }
+            }
+        }
+
+        wire
+    }
 }
 
 /// Extract JSON from a response that might be wrapped in markdown code fences.
@@ -259,4 +729,22 @@ fn extract_json(text: &str) -> &str {
         return &text[start..=end];
     }
     text
+}
+
+/// Estimate cost in USD for a single API call based on token usage and model.
+///
+/// Rates are approximate — verify against provider pricing pages.
+pub fn estimate_cost_usd(usage: &Usage, model: &str) -> f64 {
+    // Per-million-token rates (input, output)
+    let (input_per_m, output_per_m) = match model {
+        m if m.contains("opus") => (15.0, 75.0),
+        m if m.contains("sonnet") => (3.0, 15.0),
+        m if m.contains("haiku") => (0.25, 1.25),
+        m if m.contains("gpt-4o") => (2.50, 10.0),
+        m if m.contains("gpt-4") => (10.0, 30.0),
+        m if m.contains(":free") => (0.0, 0.0),
+        _ => (1.0, 2.0), // conservative default for unknown models
+    };
+    (usage.input_tokens as f64 * input_per_m + usage.output_tokens as f64 * output_per_m)
+        / 1_000_000.0
 }
