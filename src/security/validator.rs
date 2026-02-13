@@ -32,10 +32,10 @@ pub struct ValidatedFinding {
 
 /// Intermediate deserialization target for the LLM's JSON output.
 #[derive(Deserialize)]
-struct VerdictEntry {
-    title: String,
-    verdict: String,
-    reasoning: String,
+pub struct VerdictEntry {
+    pub title: String,
+    pub verdict: String,
+    pub reasoning: String,
 }
 
 const VALIDATOR_PROMPT: &str = r#"You are a security auditor reviewing another auditor's findings against a Solana program repository. Your job is adversarial: for each finding below, use the provided tools to read the cited code and try to DISPROVE it.
@@ -479,7 +479,7 @@ fn extract_verdicts(messages: &[ConversationMessage]) -> Vec<VerdictEntry> {
 }
 
 /// Try to parse a JSON array of VerdictEntry from text, handling markdown fences.
-fn try_parse_verdicts(text: &str) -> Option<Vec<VerdictEntry>> {
+pub fn try_parse_verdicts(text: &str) -> Option<Vec<VerdictEntry>> {
     // ```json ... ```
     if let Some(start) = text.find("```json") {
         let content = &text[start + 7..];

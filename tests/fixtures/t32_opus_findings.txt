@@ -1,0 +1,105 @@
+Based on my investigation of the shielded-pool-pinocchio-solana repository, here are my findings:
+
+```json
+[
+  {
+    "title": "Depositor can supply arbitrary Merkle root — no on-chain tree verification",
+    "severity": "Critical",
+    "description": "The deposit instruction accepts a new_root directly from user-supplied instruction data and stores it in the pool state without any verification. There is no on-chain Merkle tree — the program blindly trusts that the depositor computed the correct root after inserting their commitment. An attacker can deposit a minimal amount (e.g., 1 lamport) while submitting a fabricated Merkle root that includes a commitment for an arbitrarily large amount. They can then generate a valid ZK proof against this fabricated root and withdraw far more SOL than they deposited, draining the vault.",
+    "evidence": [
+      "deposit.rs:32-34 — new_root is parsed directly from user-supplied instruction data with no validation",
+      "deposit.rs:71 — state.add_root(new_root) blindly stores the attacker-controlled root",
+      "state.rs:28-33 — add_root() unconditionally stores whatever root is provided",
+      "state.rs:36-46 — check_root() in withdraw will accept any root that was previously stored, including fabricated ones",
+      "withdraw.rs:85-88 — withdraw validates root against stored history, which includes attacker-fabricated roots"
+    ],
+    "attack_scenario": "1. Attacker deposits 1 lamport to the vault. 2. In the same deposit instruction, attacker supplies a fabricated new_root that contains a commitment for 1,000,000,000 lamports (1000 SOL) using a secret and nullifier_key the attacker knows. 3. The program stores this fabricated root in state.roots. 4. Attacker generates a valid ZK proof against this fabricated root (they know the secret, nullifier_key, and tree structure since they built it). 5. Attacker calls withdraw with this proof. The root check passes (it's in history), the ZK proof is valid, and 1000 SOL is transferred from the vault to the attacker. 6. The attacker has stolen all other users' deposited funds.",
+    "remediation": "Implement an on-chain Merkle tree. The commitment should be inserted into the tree by the program itself, and the new root should be computed on-chain rather than accepted from the user.",
+    "confidence": 0.97,
+    "affected_files": ["shielded_pool_program/src/instructions/deposit.rs", "shielded_pool_program/src/state.rs", "shielded_pool_program/src/instructions/withdraw.rs"]
+  },
+  {
+    "title": "ZK circuit does not bind recipient to the commitment — recipient is unconstrained",
+    "severity": "Critical",
+    "description": "The Noir circuit's only constraint on the recipient public input is assert(recipient != 0). The recipient is not hashed into the commitment, not used in the nullifier derivation, and not otherwise constrained by any private inputs. A malicious relayer can substitute any recipient they choose because the circuit does not bind the recipient.",
+    "evidence": [
+      "noir_circuit/src/main.nr:53 — assert(recipient != 0) is the ONLY constraint on recipient",
+      "noir_circuit/src/main.nr:42 — commitment = H(secret, nullifier_key, amount) — recipient NOT included",
+      "withdraw.rs:104-107 — on-chain check compares submitted_recipient to account, but proof doesn't enforce the binding"
+    ],
+    "attack_scenario": "A malicious relayer who generates the proof for users can substitute any recipient they choose because the circuit does not bind the recipient to private inputs.",
+    "remediation": "Include the recipient in the commitment hash: commitment = H(secret, nullifier_key, amount, recipient).",
+    "confidence": 0.85,
+    "affected_files": ["noir_circuit/src/main.nr", "shielded_pool_program/src/instructions/withdraw.rs"]
+  },
+  {
+    "title": "Deposit commitment is never verified or stored — no on-chain commitment tracking",
+    "severity": "Critical",
+    "description": "The deposit instruction parses the commitment from instruction data (stored as _commitment with underscore prefix) but never uses it. The commitment is not stored on-chain, not inserted into any Merkle tree, and not verified against the new_root. This is the root enabler for the arbitrary-root vulnerability.",
+    "evidence": [
+      "deposit.rs:29-31 — let _commitment: [u8; 32] = data[8..40] — intentionally unused",
+      "deposit.rs:71 — only new_root is used; commitment is ignored"
+    ],
+    "attack_scenario": "Since the commitment is unused, the depositor can supply any 32 bytes. Combined with arbitrary root acceptance, this enables complete protocol bypass.",
+    "remediation": "Store commitments on-chain in a Merkle tree account. Verify that the new_root is the result of inserting the provided commitment into the current tree state.",
+    "confidence": 0.97,
+    "affected_files": ["shielded_pool_program/src/instructions/deposit.rs"]
+  },
+  {
+    "title": "Zero-amount deposits allow free Merkle root manipulation",
+    "severity": "High",
+    "description": "The deposit instruction does not validate that the transfer amount is greater than zero. An attacker can flush all legitimate roots out of the 32-entry circular history buffer by making 32 zero-amount deposits with garbage roots, breaking pending withdrawals.",
+    "evidence": [
+      "deposit.rs:26-28 — amount parsed but never checked for > 0",
+      "deposit.rs:39-44 — SystemTransfer with amount=0 succeeds",
+      "state.rs:30-32 — circular buffer of 32 entries means old roots are evicted"
+    ],
+    "attack_scenario": "Attacker sends 32 zero-amount deposits with arbitrary roots, evicting all legitimate roots from history. Users' pending withdrawals fail because their root is no longer in history. Funds locked — denial of service.",
+    "remediation": "Add check: if amount == 0 { return Err(ProgramError::InvalidInstructionData); }",
+    "confidence": 0.92,
+    "affected_files": ["shielded_pool_program/src/instructions/deposit.rs", "shielded_pool_program/src/state.rs"]
+  },
+  {
+    "title": "Nullifier double-spend check relies on lamports instead of account existence flag",
+    "severity": "High",
+    "description": "The nullifier double-spend check uses nullifier_account.lamports() > 0 to determine if a nullifier has been used. Nullifier accounts are created with space=0. If any future instruction closes nullifier accounts, double-spending becomes possible.",
+    "evidence": [
+      "withdraw.rs:98-101 — if nullifier_account.lamports() > 0 as the double-spend guard",
+      "withdraw.rs:144-151 — nullifier account created with space=0"
+    ],
+    "attack_scenario": "If a future update adds account cleanup, nullifier accounts could be closed, re-enabling the nullifier for reuse.",
+    "remediation": "Allocate at least 1 byte of space for nullifier accounts and write a flag byte upon creation. Check for the flag byte's presence.",
+    "confidence": 0.75,
+    "affected_files": ["shielded_pool_program/src/instructions/withdraw.rs"]
+  },
+  {
+    "title": "Vault SOL withdrawal uses direct lamport manipulation instead of system program CPI",
+    "severity": "Medium",
+    "description": "The withdrawal of SOL from the vault directly modifies lamport balances via set_lamports() instead of using a System Program transfer CPI with PDA signing, bypassing safety checks.",
+    "evidence": [
+      "withdraw.rs:173-176 — vault lamports decremented directly",
+      "withdraw.rs:177-180 — recipient lamports incremented directly"
+    ],
+    "attack_scenario": "Pattern is dangerous if any bug exists in account validation. Recipient has no ownership validation beyond being writable.",
+    "remediation": "Use System Program transfer via CPI with PDA signing for the vault.",
+    "confidence": 0.6,
+    "affected_files": ["shielded_pool_program/src/instructions/withdraw.rs"]
+  },
+  {
+    "title": "State PDA not validated in withdraw instruction",
+    "severity": "Medium",
+    "description": "The withdraw instruction checks that state_account is owned by the program and initialized, but does NOT verify that its address matches the expected PDA derived from seeds [b'pool_state']. Unlike deposit and initialize which check PDA derivation.",
+    "evidence": [
+      "withdraw.rs:49-50 — only checks owned_by, not PDA derivation",
+      "deposit.rs:47-49 — deposit DOES check PDA derivation",
+      "initialize.rs:26-29 — initialize DOES check PDA derivation"
+    ],
+    "attack_scenario": "If an attacker can get a second program-owned account with enough space (1072 bytes), they could craft it with fabricated root history and pass it as the state account to withdraw.",
+    "remediation": "Add PDA derivation check in withdraw.",
+    "confidence": 0.7,
+    "affected_files": ["shielded_pool_program/src/instructions/withdraw.rs"]
+  }
+]
+```
+
+These findings represent a comprehensive analysis of the shielded pool's privacy protocol implementation, revealing critical flaws in the trust model between on-chain and off-chain components.
