@@ -1,22 +1,9 @@
-mod agent;
-mod config;
-mod error;
-mod http;
-mod llm;
-mod narrative;
-mod output;
-mod security;
+use st_solguard::*;
 
 use anyhow::Result;
 use clap::Parser;
 use std::path::PathBuf;
 use tracing::info;
-
-/// CLI override for LLM provider/model.
-pub struct LlmOverride {
-    pub provider: llm::Provider,
-    pub model: String,
-}
 
 /// Build an LlmClient from config + optional CLI override.
 fn build_llm_client(

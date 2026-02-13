@@ -244,3 +244,58 @@ fn collect_rust_files(root: &Path) -> Result<Vec<PathBuf>> {
     }
     Ok(files)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn finding_to_security_finding() {
+        let f = Finding {
+            pattern_id: "SOL-001".into(),
+            title: "Missing Signer".into(),
+            description: "desc".into(),
+            severity: Severity::Critical,
+            file_path: PathBuf::from("src/lib.rs"),
+            line_number: 42,
+            code_snippet: "code".into(),
+            remediation: "fix".into(),
+            confidence: 0.8,
+            references: vec!["ref1".into()],
+        };
+        let sf: SecurityFinding = f.into();
+        assert_eq!(sf.severity, "Critical");
+        assert_eq!(sf.title, "Missing Signer");
+        assert_eq!(sf.description, "desc");
+        assert_eq!(sf.file_path, PathBuf::from("src/lib.rs"));
+        assert_eq!(sf.line_number, 42);
+        assert_eq!(sf.remediation, "fix");
+        assert_eq!(sf.validation_status, ValidationStatus::Unvalidated);
+        assert!(sf.validation_reasoning.is_none());
+    }
+
+    #[test]
+    fn severity_display_critical() {
+        assert_eq!(Severity::Critical.to_string(), "Critical");
+    }
+
+    #[test]
+    fn severity_display_high() {
+        assert_eq!(Severity::High.to_string(), "High");
+    }
+
+    #[test]
+    fn severity_display_medium() {
+        assert_eq!(Severity::Medium.to_string(), "Medium");
+    }
+
+    #[test]
+    fn severity_display_low() {
+        assert_eq!(Severity::Low.to_string(), "Low");
+    }
+
+    #[test]
+    fn severity_display_info() {
+        assert_eq!(Severity::Info.to_string(), "Info");
+    }
+}

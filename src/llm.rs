@@ -798,3 +798,83 @@ pub fn estimate_cost_usd(usage: &Usage, model: &str) -> f64 {
     (usage.input_tokens as f64 * input_per_m + usage.output_tokens as f64 * output_per_m)
         / 1_000_000.0
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn extract_json_strips_json_fences() {
+        assert_eq!(extract_json("```json\n{\"a\":1}\n```"), "{\"a\":1}");
+    }
+
+    #[test]
+    fn extract_json_strips_bare_fences_with_json() {
+        assert_eq!(extract_json("```\n{\"a\":1}\n```"), "{\"a\":1}");
+    }
+
+    #[test]
+    fn extract_json_embedded_object() {
+        let input = "some text {\"a\":1} more text";
+        assert_eq!(extract_json(input), "{\"a\":1}");
+    }
+
+    #[test]
+    fn extract_json_no_json_returns_input() {
+        assert_eq!(extract_json("no json here"), "no json here");
+    }
+
+    #[test]
+    fn extract_json_array_in_fences() {
+        assert_eq!(extract_json("```json\n[1,2,3]\n```"), "[1,2,3]");
+    }
+
+    #[test]
+    fn estimate_cost_opus() {
+        let usage = Usage {
+            input_tokens: 1000,
+            output_tokens: 500,
+        };
+        let cost = estimate_cost_usd(&usage, "claude-opus-4-20250514");
+        assert!((cost - 0.0525).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn estimate_cost_free_model() {
+        let usage = Usage {
+            input_tokens: 1000,
+            output_tokens: 500,
+        };
+        let cost = estimate_cost_usd(&usage, "arcee-ai/trinity:free");
+        assert!((cost - 0.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn estimate_cost_unknown_model() {
+        let usage = Usage {
+            input_tokens: 1000,
+            output_tokens: 500,
+        };
+        let cost = estimate_cost_usd(&usage, "some-unknown-model");
+        assert!((cost - 0.002).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn estimate_cost_sonnet() {
+        let usage = Usage {
+            input_tokens: 1000,
+            output_tokens: 500,
+        };
+        let cost = estimate_cost_usd(&usage, "claude-sonnet-4-20250514");
+        assert!((cost - 0.0105).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn estimate_cost_zero_tokens() {
+        let zero = Usage {
+            input_tokens: 0,
+            output_tokens: 0,
+        };
+        assert!((estimate_cost_usd(&zero, "opus") - 0.0).abs() < f64::EPSILON);
+    }
+}
