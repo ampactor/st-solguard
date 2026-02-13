@@ -455,7 +455,7 @@ fn extract_findings(messages: &[ConversationMessage]) -> Vec<AgentFinding> {
 }
 
 /// Try to parse a JSON findings array from text, handling markdown fences.
-fn try_parse_findings(text: &str) -> Option<Vec<AgentFinding>> {
+pub fn try_parse_findings(text: &str) -> Option<Vec<AgentFinding>> {
     // Try extracting from ```json ... ``` fences first
     if let Some(start) = text.find("```json") {
         let content = &text[start + 7..];

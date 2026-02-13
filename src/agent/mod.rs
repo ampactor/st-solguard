@@ -202,7 +202,7 @@ pub async fn run_full_pipeline(
 }
 
 /// Infer protocol category from narrative content for scan context.
-fn infer_protocol_category(narrative: &Narrative) -> Option<String> {
+pub fn infer_protocol_category(narrative: &Narrative) -> Option<String> {
     let text = format!("{} {}", narrative.title, narrative.summary).to_lowercase();
     if text.contains("dex")
         || text.contains("amm")
