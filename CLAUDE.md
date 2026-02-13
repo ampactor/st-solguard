@@ -44,6 +44,7 @@ cargo run -- test path/to/repo --provider openrouter --model <model> --max-turns
 ```bash
 GITHUB_TOKEN=          # GitHub API (required for narrative detection)
 OPENROUTER_API_KEY=    # Default LLM provider for narrative synthesis
+GROQ_API_KEY=          # Groq provider (fast structured tasks via [models] routing)
 ANTHROPIC_API_KEY=     # When using provider = "anthropic" in config.toml
 SOLANA_RPC_URL=        # Solana RPC endpoint (default: public mainnet)
 ```
@@ -53,15 +54,20 @@ Shared .env at `~/Documents/.env` — loaded automatically.
 ## Architecture
 
 ```
-CLI → Agent Orchestrator
-  Phase 1: Narrative Detection (GitHub + Solana RPC + Social signals → LLM synthesis)
+CLI → ModelRouter → Agent Orchestrator
+  Phase 1: Narrative Detection (GitHub + Solana RPC + Social + DeFiLlama → LLM synthesis)
   Phase 2: Target Selection (repos from narratives)
-  Phase 3: Clone + Security Scanning
+  Phase 3: Clone + Security Scanning (per repo)
+           - Build ScanContext from narrative (protocol category, sibling findings)
+           - compute_budget() → dynamic max_turns/cost_limit from confidence
            Static: regex (SOL-001..010) + AST (AST-001..003) patterns
-           Deep (--deep): multi-turn LLM agent investigates repo with tools
-  Phase 4: Cross-Reference (findings ↔ narratives)
-  Phase 5: Combined HTML Report (Askama template)
+           Deep (--deep): multi-turn LLM agent with protocol-specific focus areas
+           → validate_findings() in-place: remove Dismissed, downgrade Disputed
+  Phase 4: Cross-Reference (deterministic risk scoring + optional LLM relevance)
+  Phase 5: Narrative-centric HTML Report (sorted by risk_score desc)
 ```
+
+**Model routing:** `ModelRouter` maps `TaskKind` → `LlmClient`. Four task kinds: `NarrativeSynthesis`, `DeepInvestigation`, `Validation`, `CrossReference`. Config `[models]` section overrides per-task; falls back to `[llm]`. CLI `--model` overrides all uniformly.
 
 ### The Triple-Dip Value
 
@@ -96,23 +102,33 @@ Analysis:
 - Hard stops: max_turns (30), cost_limit_usd ($20) — configurable via `[agent_review]` in config.toml
 - Supports Anthropic, OpenRouter, OpenAI wire formats for tool_use
 - Hardening: progress logging (info-level), stuck-loop detection (3x same call → nudge), malformed input guard, forced summary turn (converse with empty tools when max_turns hit with no findings)
+- **Narrative-informed scanning:** `ScanContext` carries protocol category, narrative summary, and sibling findings into the agent prompt. Protocol-specific focus areas: DEX (sandwich/LP/oracles), Lending (liquidation/interest/collateral), Privacy (Merkle proofs/nullifiers), Staking (reward distribution/slashing), NFT (royalty bypass/listing races).
+- **Dynamic budget:** `compute_budget(confidence, repo_count)` → depth = confidence / sqrt(repo_count), clamped to turns [5,40] and cost [$2,$30].
 
-**Adversarial validator** (`test` subcommand): Two-phase pipeline:
-1. Investigator finds vulnerabilities (agent_review.rs)
-2. Validator tries to DISPROVE each finding (validator.rs) → Confirmed / Disputed / Dismissed
+**Adversarial validator:** Two modes:
+1. `test` subcommand: standalone investigate → validate pipeline (development/calibration)
+2. `validate_findings()`: in-place adapter for the full pipeline — annotates `SecurityFinding` vec with `ValidationStatus` + reasoning, removes Dismissed, downgrades Disputed severity by one level
+- Uses `ModelRouter::client_for(TaskKind::Validation)` for model selection
 - Same tool access as investigator, adversarial system prompt
 - Forced summary fallback for verdict extraction
+
+**Cross-reference engine** (`src/agent/cross_ref.rs`):
+- Links findings to narratives by matching repo names from file paths to narrative `active_repos`
+- Deterministic risk scoring: `sum(severity_weight * validation_multiplier * narrative_confidence)` per narrative. Severity weights: Critical=10, High=5, Medium=2, Low=0.5. Validation multipliers: Confirmed=1.0, Disputed=0.5, Unvalidated=0.7.
+- Optional LLM relevance pass (one fast call per narrative via `TaskKind::CrossReference`)
+- Populates `Narrative.{risk_score, risk_level, repo_findings}` for the report
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
 | `src/main.rs` | CLI entry (6 subcommands: run, narratives, scan, investigate, test, render) |
-| `src/config.rs` | TOML + env var config loading, `AgentReviewConfig` |
+| `src/config.rs` | TOML + env var config loading, `AgentReviewConfig`, `ModelsConfig` |
 | `src/error.rs` | Error types |
 | `src/http.rs` | HTTP client with retry/backoff |
-| `src/llm.rs` | LLM client: single-turn `complete()` + multi-turn `converse()` with tool_use |
-| `src/agent/mod.rs` | Autonomous orchestration (5 phases, optional deep scan) |
+| `src/llm.rs` | LLM client (`complete`/`converse`), `ModelRouter`, `TaskKind` routing |
+| `src/agent/mod.rs` | Autonomous orchestration (5 phases, narrative-informed scanning, per-repo validation) |
+| `src/agent/cross_ref.rs` | Cross-reference engine: risk scoring, narrative↔finding linking |
 | `src/narrative/mod.rs` | Narrative pipeline orchestrator |
 | `src/narrative/github.rs` | GitHub signal collection |
 | `src/narrative/solana_rpc.rs` | Solana RPC signal collection |
@@ -122,10 +138,10 @@ Analysis:
 | `src/security/regex_scan.rs` | 10 vulnerability regex patterns |
 | `src/security/ast_scan.rs` | 3 syn-based AST patterns |
 | `src/security/agent_tools.rs` | 4 repo investigation tools for deep agent review |
-| `src/security/agent_review.rs` | Multi-turn agent loop: conversation → tool dispatch → finding extraction |
-| `src/security/validator.rs` | Adversarial second-pass: tries to disprove findings → Confirmed/Disputed/Dismissed |
-| `src/output/mod.rs` | Combined report rendering |
-| `config.toml` | Default configuration (including `[agent_review]`) |
+| `src/security/agent_review.rs` | Multi-turn agent loop, `ScanContext`, `compute_budget()`, protocol focus areas |
+| `src/security/validator.rs` | Adversarial validation: `validate()` (standalone) + `validate_findings()` (pipeline) |
+| `src/output/mod.rs` | Narrative-centric report: risk badges, linked findings, orphans, methodology |
+| `config.toml` | Default configuration (`[agent_review]`, optional `[models]` for per-task routing) |
 | `templates/solguard_report.html` | HTML report template |
 
 ## Sprint Context
@@ -138,14 +154,15 @@ Durable state: `~/.claude/projects/-home-suds-Documents/memory/superteam-sprint.
 
 | Source File(s) | Documentation Target(s) | What to Update |
 |---|---|---|
-| `src/agent/mod.rs` | CLAUDE.md (Architecture), README.md | Pipeline phases, deep flag |
+| `src/agent/mod.rs` | CLAUDE.md (Architecture), README.md | Pipeline phases, deep flag, per-repo validation |
+| `src/agent/cross_ref.rs` | CLAUDE.md (Security Pipeline) | Risk scoring formula, linking logic |
 | `src/narrative/*.rs` | CLAUDE.md (Narrative Pipeline) | Signal sources, synthesis |
 | `src/security/mod.rs` | CLAUDE.md (Security Pipeline) | Scanner orchestration, scan_repo_deep |
 | `src/security/regex_scan.rs`, `ast_scan.rs` | CLAUDE.md (Security Pipeline) | Pattern IDs, scan logic |
 | `src/security/agent_review.rs` | CLAUDE.md (Security Pipeline) | Agent loop, system prompt, finding extraction, hardening |
 | `src/security/validator.rs` | CLAUDE.md (Security Pipeline) | Validator module, verdicts, test subcommand |
 | `src/security/agent_tools.rs` | CLAUDE.md (Security Pipeline) | Tool definitions, dispatch, path canonicalization |
-| `src/config.rs`, `config.toml` | CLAUDE.md (Environment Variables) | Config options, agent_review section |
-| `src/llm.rs` | CLAUDE.md (Key Files) | Provider support, converse() wire formats |
+| `src/config.rs`, `config.toml` | CLAUDE.md (Environment Variables) | Config options, agent_review section, [models] routing |
+| `src/llm.rs` | CLAUDE.md (Key Files, Architecture) | Provider support, ModelRouter, TaskKind routing |
 | `src/main.rs` | CLAUDE.md (Run) | CLI subcommands, flags |
 | `src/output/mod.rs`, templates | CLAUDE.md (Key Files) | Report structure |
