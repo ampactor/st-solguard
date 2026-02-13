@@ -37,8 +37,8 @@
                 <p class="text-gray-400 text-sm">Autonomous Solana Ecosystem Intelligence</p>
             </div>
             <div class="text-right text-sm text-gray-500">
-                <p>Generated: 2026-02-12 07:45 UTC</p>
-                <p>8 narratives | 155 findings across 4 repos</p>
+                <p>Generated: 2026-02-13 11:35 UTC</p>
+                <p>9 narratives | 7 findings across 1 repos</p>
             </div>
         </div>
     </header>
@@ -47,131 +47,414 @@
         <!-- Stats -->
         <div class="grid grid-cols-4 gap-4">
             <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                <p class="text-3xl font-bold text-solana-green">8</p>
+                <p class="text-3xl font-bold text-solana-green">9</p>
                 <p class="text-gray-400 text-sm">Emerging Narratives</p>
             </div>
             <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                <p class="text-3xl font-bold text-blue-400">4</p>
+                <p class="text-3xl font-bold text-blue-400">1</p>
                 <p class="text-gray-400 text-sm">Repos Scanned</p>
             </div>
             <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                <p class="text-3xl font-bold text-red-400">102</p>
+                <p class="text-3xl font-bold text-red-400">5</p>
                 <p class="text-gray-400 text-sm">Critical/High Findings</p>
             </div>
             <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                <p class="text-3xl font-bold text-yellow-400">155</p>
+                <p class="text-3xl font-bold text-yellow-400">7</p>
                 <p class="text-gray-400 text-sm">Total Findings</p>
             </div>
         </div>
 
-        <!-- Cross-reference insight -->
+        <!-- Executive Summary -->
         
         <div class="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
             <h3 class="text-yellow-400 font-semibold mb-2">Ecosystem Risk Map</h3>
-            <p class="text-gray-300 text-sm">SolGuard detected <strong>8</strong> growth narratives and scanned <strong>4</strong> repos from those emerging sectors. Found <strong>155</strong> vulnerability patterns — 102 at Critical/High severity. Repos in fast-growing sectors often ship faster than they audit.</p>
+            <p class="text-gray-300 text-sm">SolGuard detected <strong>9</strong> growth narratives and scanned <strong>1</strong> repos from those emerging sectors. Found <strong>7</strong> vulnerability patterns — 5 at Critical/High severity. Adversarial validation confirmed <strong>7</strong> findings and disputed <strong>0</strong>. Repos in fast-growing sectors often ship faster than they audit.</p>
         </div>
         
 
-        <!-- Narratives -->
+        <!-- Narratives with linked findings -->
         <section>
-            <h2 class="text-xl font-bold mb-6 text-gray-200">Emerging Narratives</h2>
+            <h2 class="text-xl font-bold mb-6 text-gray-200">Narrative Risk Analysis</h2>
             
-            <div class="space-y-4">
+            <div class="space-y-6">
                 
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">Jupiter Dominance as Solana&#39;s DeFi Routing Layer</h3>
-                        <span class="text-sm text-gray-400">88% confidence</span>
+                <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+                    <!-- Narrative header -->
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-semibold text-gray-100">Privacy-Preserving Protocol Development on Solana</h3>
+                            <div class="flex items-center gap-2">
+                                
+                                <span class="text-xs px-2 py-0.5 rounded border bg-red-900/30 text-red-400 border-red-800/50">Risk: 37.4</span>
+                                
+                                <span class="text-sm text-gray-400">85%</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-2">New ZK privacy pools emerging on Solana using Pinocchio (raw #![no_std]) with Groth16/Noir circuits. The shielded-pool-pinocchio-solana repo implements a mixer-style deposit/withdraw system — explicitly marked NOT AUDITED. Privacy protocols handle SOL custody directly, making trust model correctness critical.</p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Emerging</span>
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">1 repos</span>
+                            
+                            <span class="text-xs bg-red-900/30 text-red-400 px-2 py-0.5 rounded">
+                                7 findings
+                            </span>
+                            
+                        </div>
                     </div>
-                    <p class="text-gray-400 text-sm mt-2">Jupiter Aggregator v6 processes an estimated 211,765 tx/hr — roughly 8.5x the throughput of Raydium AMM (25,000 tx/hr) — cementing its position as the default routing layer for Solana DeFi. This matters because aggregator dominance concentrates liquidity discovery into a single protocol, creating a structural dependency where new DEXes must integrate Jupiter to reach users. Combined with 9 new DeFi GitHub repos (269 stars, 229 forks) including DEX parsers and arbitrage bots, the surrounding tooling ecosystem is building specifically around Jupiter&#39;s transaction flow.</p>
-                    <div class="mt-2 flex gap-2">
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Accelerating</span>
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">2 repos</span>
+
+                    <!-- Linked findings -->
+                    
+                    <div class="border-t border-gray-800 bg-gray-950/50 px-5 py-3">
+                        <p class="text-xs text-gray-500 mb-3 uppercase tracking-wider">Linked Vulnerabilities</p>
+                        <div class="space-y-3">
+                            
+                            <div class="bg-gray-900/50 rounded p-3 border border-gray-800/50">
+                                <div class="flex items-start justify-between">
+                                    <span class="text-sm text-gray-200 font-medium">Depositor can supply arbitrary Merkle root — no on-chain tree verification</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-xs bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded">Confirmed</span>
+                                        <span class="text-xs font-medium text-red-500">Critical</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-500 text-xs mt-1">The deposit instruction accepts a new_root directly from user-supplied instruction data and stores it in the pool state without any verification. There is no on-chain Merkle tree — the program blindly trusts that the depositor computed the correct root after inserting their commitment. An attacker can deposit a minimal amount (e.g., 1 lamport) while submitting a fabricated Merkle root that includes a commitment for an arbitrarily large amount. They can then generate a valid ZK proof against this fabricated root and withdraw far more SOL than they deposited, draining the vault.</p>
+                                <div class="mt-1.5 flex flex-wrap gap-3 text-xs">
+                                    <span class="text-gray-500"><span class="text-gray-600">Fix:</span> Implement an on-chain Merkle tree. The commitment should be inserted into the tree by the program itself, and the new root should be computed on-chain rather than accepted from the user.</span>
+                                </div>
+                                <div class="mt-1 flex items-center gap-3 text-xs text-gray-600">
+                                    <span>shielded-pool-pinocchio-solana</span>
+                                    <span>repos/shielded-pool-pinocchio-solana/shielded_pool_program/src/instructions/deposit.rs:32</span>
+                                </div>
+                                
+                                <details class="mt-1">
+                                    <summary class="text-xs text-gray-600 hover:text-gray-500">Validation reasoning</summary>
+                                    <p class="text-xs text-gray-500 mt-1">Manually verified in T32 clean-room analysis — deposit.rs:32-34 parses new_root from instruction data, deposit.rs:71 stores it via state.add_root() with zero verification. The _commitment field (underscore prefix) is never used.</p>
+                                </details>
+                                
+                            </div>
+                            
+                            <div class="bg-gray-900/50 rounded p-3 border border-gray-800/50">
+                                <div class="flex items-start justify-between">
+                                    <span class="text-sm text-gray-200 font-medium">ZK circuit does not bind recipient to the commitment — recipient is unconstrained</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-xs bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded">Confirmed</span>
+                                        <span class="text-xs font-medium text-red-500">Critical</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-500 text-xs mt-1">The Noir circuit&#39;s only constraint on the recipient public input is assert(recipient != 0). The recipient is not hashed into the commitment, not used in the nullifier derivation, and not otherwise constrained by any private inputs. A malicious relayer can substitute any recipient they choose because the circuit does not bind the recipient.</p>
+                                <div class="mt-1.5 flex flex-wrap gap-3 text-xs">
+                                    <span class="text-gray-500"><span class="text-gray-600">Fix:</span> Include the recipient in the commitment hash: commitment = H(secret, nullifier_key, amount, recipient).</span>
+                                </div>
+                                <div class="mt-1 flex items-center gap-3 text-xs text-gray-600">
+                                    <span>shielded-pool-pinocchio-solana</span>
+                                    <span>repos/shielded-pool-pinocchio-solana/noir_circuit/src/main.nr:53</span>
+                                </div>
+                                
+                                <details class="mt-1">
+                                    <summary class="text-xs text-gray-600 hover:text-gray-500">Validation reasoning</summary>
+                                    <p class="text-xs text-gray-500 mt-1">Manually verified in T32 clean-room analysis — main.nr:53 shows assert(recipient != 0) as the ONLY constraint, main.nr:42 shows commitment = H(secret, nullifier_key, amount) with recipient excluded.</p>
+                                </details>
+                                
+                            </div>
+                            
+                            <div class="bg-gray-900/50 rounded p-3 border border-gray-800/50">
+                                <div class="flex items-start justify-between">
+                                    <span class="text-sm text-gray-200 font-medium">Deposit commitment is never verified or stored — no on-chain commitment tracking</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-xs bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded">Confirmed</span>
+                                        <span class="text-xs font-medium text-red-500">Critical</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-500 text-xs mt-1">The deposit instruction parses the commitment from instruction data (stored as _commitment with underscore prefix) but never uses it. The commitment is not stored on-chain, not inserted into any Merkle tree, and not verified against the new_root. This is the root enabler for the arbitrary-root vulnerability.</p>
+                                <div class="mt-1.5 flex flex-wrap gap-3 text-xs">
+                                    <span class="text-gray-500"><span class="text-gray-600">Fix:</span> Store commitments on-chain in a Merkle tree account. Verify that the new_root is the result of inserting the provided commitment into the current tree state.</span>
+                                </div>
+                                <div class="mt-1 flex items-center gap-3 text-xs text-gray-600">
+                                    <span>shielded-pool-pinocchio-solana</span>
+                                    <span>repos/shielded-pool-pinocchio-solana/shielded_pool_program/src/instructions/deposit.rs:29</span>
+                                </div>
+                                
+                                <details class="mt-1">
+                                    <summary class="text-xs text-gray-600 hover:text-gray-500">Validation reasoning</summary>
+                                    <p class="text-xs text-gray-500 mt-1">Manually verified in T32 clean-room analysis — deposit.rs:29-31 assigns let _commitment: [u8; 32] with underscore prefix (Rust convention for intentionally unused), deposit.rs:71 only uses new_root.</p>
+                                </details>
+                                
+                            </div>
+                            
+                            <div class="bg-gray-900/50 rounded p-3 border border-gray-800/50">
+                                <div class="flex items-start justify-between">
+                                    <span class="text-sm text-gray-200 font-medium">Zero-amount deposits allow free Merkle root manipulation</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-xs bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded">Confirmed</span>
+                                        <span class="text-xs font-medium text-orange-400">High</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-500 text-xs mt-1">The deposit instruction does not validate that the transfer amount is greater than zero. An attacker can flush all legitimate roots out of the 32-entry circular history buffer by making 32 zero-amount deposits with garbage roots, breaking pending withdrawals. Combined with C-01, enables free vault drain.</p>
+                                <div class="mt-1.5 flex flex-wrap gap-3 text-xs">
+                                    <span class="text-gray-500"><span class="text-gray-600">Fix:</span> Add check: if amount == 0 { return Err(ProgramError::InvalidInstructionData); }</span>
+                                </div>
+                                <div class="mt-1 flex items-center gap-3 text-xs text-gray-600">
+                                    <span>shielded-pool-pinocchio-solana</span>
+                                    <span>repos/shielded-pool-pinocchio-solana/shielded_pool_program/src/instructions/deposit.rs:26</span>
+                                </div>
+                                
+                                <details class="mt-1">
+                                    <summary class="text-xs text-gray-600 hover:text-gray-500">Validation reasoning</summary>
+                                    <p class="text-xs text-gray-500 mt-1">Manually verified in T32 clean-room analysis — deposit.rs:26-28 parses amount but never checks &#62; 0, deposit.rs:39-44 SystemTransfer with amount=0 succeeds on Solana.</p>
+                                </details>
+                                
+                            </div>
+                            
+                            <div class="bg-gray-900/50 rounded p-3 border border-gray-800/50">
+                                <div class="flex items-start justify-between">
+                                    <span class="text-sm text-gray-200 font-medium">Nullifier double-spend check relies on lamports instead of account existence flag</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-xs bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded">Confirmed</span>
+                                        <span class="text-xs font-medium text-orange-400">High</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-500 text-xs mt-1">The nullifier double-spend check uses nullifier_account.lamports() &#62; 0 to determine if a nullifier has been used. Nullifier accounts are created with space=0. If any future instruction closes nullifier accounts, double-spending becomes possible.</p>
+                                <div class="mt-1.5 flex flex-wrap gap-3 text-xs">
+                                    <span class="text-gray-500"><span class="text-gray-600">Fix:</span> Allocate at least 1 byte of space for nullifier accounts and write a flag byte upon creation. Check for the flag byte&#39;s presence.</span>
+                                </div>
+                                <div class="mt-1 flex items-center gap-3 text-xs text-gray-600">
+                                    <span>shielded-pool-pinocchio-solana</span>
+                                    <span>repos/shielded-pool-pinocchio-solana/shielded_pool_program/src/instructions/withdraw.rs:98</span>
+                                </div>
+                                
+                                <details class="mt-1">
+                                    <summary class="text-xs text-gray-600 hover:text-gray-500">Validation reasoning</summary>
+                                    <p class="text-xs text-gray-500 mt-1">Manually verified in T32 clean-room analysis — withdraw.rs:98-101 uses lamports() &#62; 0 as guard, withdraw.rs:144-151 creates nullifier with space=0.</p>
+                                </details>
+                                
+                            </div>
+                            
+                            <div class="bg-gray-900/50 rounded p-3 border border-gray-800/50">
+                                <div class="flex items-start justify-between">
+                                    <span class="text-sm text-gray-200 font-medium">Vault SOL withdrawal uses direct lamport manipulation instead of system program CPI</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-xs bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded">Confirmed</span>
+                                        <span class="text-xs font-medium text-yellow-400">Medium</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-500 text-xs mt-1">The withdrawal of SOL from the vault directly modifies lamport balances via set_lamports() instead of using a System Program transfer CPI with PDA signing, bypassing Solana runtime safety checks.</p>
+                                <div class="mt-1.5 flex flex-wrap gap-3 text-xs">
+                                    <span class="text-gray-500"><span class="text-gray-600">Fix:</span> Use System Program transfer via CPI with PDA signing for the vault.</span>
+                                </div>
+                                <div class="mt-1 flex items-center gap-3 text-xs text-gray-600">
+                                    <span>shielded-pool-pinocchio-solana</span>
+                                    <span>repos/shielded-pool-pinocchio-solana/shielded_pool_program/src/instructions/withdraw.rs:173</span>
+                                </div>
+                                
+                                <details class="mt-1">
+                                    <summary class="text-xs text-gray-600 hover:text-gray-500">Validation reasoning</summary>
+                                    <p class="text-xs text-gray-500 mt-1">Manually verified in T32 clean-room analysis — withdraw.rs:173-176 decrements vault lamports directly, withdraw.rs:177-180 increments recipient lamports directly.</p>
+                                </details>
+                                
+                            </div>
+                            
+                            <div class="bg-gray-900/50 rounded p-3 border border-gray-800/50">
+                                <div class="flex items-start justify-between">
+                                    <span class="text-sm text-gray-200 font-medium">State PDA not validated in withdraw instruction</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-xs bg-green-900/30 text-green-400 px-1.5 py-0.5 rounded">Confirmed</span>
+                                        <span class="text-xs font-medium text-yellow-400">Medium</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-500 text-xs mt-1">The withdraw instruction checks that state_account is owned by the program and initialized, but does NOT verify that its address matches the expected PDA derived from seeds [b&#39;pool_state&#39;]. Unlike deposit and initialize which check PDA derivation.</p>
+                                <div class="mt-1.5 flex flex-wrap gap-3 text-xs">
+                                    <span class="text-gray-500"><span class="text-gray-600">Fix:</span> Add PDA derivation check in withdraw, matching the pattern used in deposit.rs:47-49 and initialize.rs:26-29.</span>
+                                </div>
+                                <div class="mt-1 flex items-center gap-3 text-xs text-gray-600">
+                                    <span>shielded-pool-pinocchio-solana</span>
+                                    <span>repos/shielded-pool-pinocchio-solana/shielded_pool_program/src/instructions/withdraw.rs:49</span>
+                                </div>
+                                
+                                <details class="mt-1">
+                                    <summary class="text-xs text-gray-600 hover:text-gray-500">Validation reasoning</summary>
+                                    <p class="text-xs text-gray-500 mt-1">Manually verified in T32 clean-room analysis — withdraw.rs:49-50 only checks owned_by, deposit.rs:47-49 additionally checks PDA derivation.</p>
+                                </details>
+                                
+                            </div>
+                            
+                        </div>
                     </div>
+                    
                 </div>
                 
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">Anti-JIT and MEV Protection Tooling Surge</h3>
-                        <span class="text-sm text-gray-400">75% confidence</span>
+                <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+                    <!-- Narrative header -->
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-semibold text-gray-100">Jupiter Dominance as Solana&#39;s DeFi Routing Layer</h3>
+                            <div class="flex items-center gap-2">
+                                
+                                <span class="text-sm text-gray-400">88%</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-2">Jupiter Aggregator v6 processes an estimated 211,765 tx/hr — roughly 8.5x the throughput of Raydium AMM (25,000 tx/hr) — cementing its position as the default routing layer for Solana DeFi. This matters because aggregator dominance concentrates liquidity discovery into a single protocol, creating a structural dependency where new DEXes must integrate Jupiter to reach users. Combined with 9 new DeFi GitHub repos (269 stars, 229 forks) including DEX parsers and arbitrage bots, the surrounding tooling ecosystem is building specifically around Jupiter&#39;s transaction flow.</p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Accelerating</span>
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">2 repos</span>
+                            
+                        </div>
                     </div>
-                    <p class="text-gray-400 text-sm mt-2">The imbue-bit/no_JIT repository (181 stars — the single most-starred new Solana DeFi repo this month) signals strong developer and user demand for MEV protection on Solana, specifically targeting JIT sandwich attacks on AMMs. This represents a structural shift from passive acceptance of MEV extraction toward active countermeasures at the application layer. The high fork count in DeFi repos (229 forks across 9 repos) suggests downstream builders are actively adapting these tools.</p>
-                    <div class="mt-2 flex gap-2">
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Emerging</span>
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">2 repos</span>
-                    </div>
+
+                    <!-- Linked findings -->
+                    
                 </div>
                 
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">Jito Consolidating Liquid Staking While Marinade Stagnates</h3>
-                        <span class="text-sm text-gray-400">92% confidence</span>
+                <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+                    <!-- Narrative header -->
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-semibold text-gray-100">Anti-JIT and MEV Protection Tooling Surge</h3>
+                            <div class="flex items-center gap-2">
+                                
+                                <span class="text-sm text-gray-400">75%</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-2">The imbue-bit/no_JIT repository (181 stars — the single most-starred new Solana DeFi repo this month) signals strong developer and user demand for MEV protection on Solana, specifically targeting JIT sandwich attacks on AMMs. This represents a structural shift from passive acceptance of MEV extraction toward active countermeasures at the application layer. The high fork count in DeFi repos (229 forks across 9 repos) suggests downstream builders are actively adapting these tools.</p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Emerging</span>
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">2 repos</span>
+                            
+                        </div>
                     </div>
-                    <p class="text-gray-400 text-sm mt-2">Jito Stake Pool processes 380 tx/hr versus Marinade Finance&#39;s 9 tx/hr — a 40:1 activity ratio indicating a decisive shift in liquid staking market share. With $24.8B in total Solana liquid staking TVL, this concentration matters: Jito&#39;s MEV-sharing model is winning over Marinade&#39;s traditional delegation approach. The second-order effect is that jitoSOL becomes the dominant LST collateral across Solana lending ($5.5B TVL) and DeFi composability layers.</p>
-                    <div class="mt-2 flex gap-2">
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Accelerating</span>
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">1 repos</span>
-                    </div>
+
+                    <!-- Linked findings -->
+                    
                 </div>
                 
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">Solana Spot ETF Momentum Driving Institutional Narrative</h3>
-                        <span class="text-sm text-gray-400">80% confidence</span>
+                <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+                    <!-- Narrative header -->
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-semibold text-gray-100">Jito Consolidating Liquid Staking While Marinade Stagnates</h3>
+                            <div class="flex items-center gap-2">
+                                
+                                <span class="text-sm text-gray-400">92%</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-2">Jito Stake Pool processes 380 tx/hr versus Marinade Finance&#39;s 9 tx/hr — a 40:1 activity ratio indicating a decisive shift in liquid staking market share. With $24.8B in total Solana liquid staking TVL, this concentration matters: Jito&#39;s MEV-sharing model is winning over Marinade&#39;s traditional delegation approach. The second-order effect is that jitoSOL becomes the dominant LST collateral across Solana lending ($5.5B TVL) and DeFi composability layers.</p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Accelerating</span>
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">1 repos</span>
+                            
+                        </div>
                     </div>
-                    <p class="text-gray-400 text-sm mt-2">Helius Blog coverage of 16 U.S. Solana Spot ETFs represents a structural legitimization event for Solana as an institutional asset class. This directly impacts the 91.5% circulating supply ratio by creating new demand sinks for SOL tokens. The convergence of ETF filings with Solana&#39;s #2 chain TVL ranking ($6.37B) suggests coordinated institutional positioning across custody, staking yield, and regulated access products.</p>
-                    <div class="mt-2 flex gap-2">
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Accelerating</span>
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">0 repos</span>
-                    </div>
+
+                    <!-- Linked findings -->
+                    
                 </div>
                 
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">AI Agent Infrastructure on Solana (SIGNIA and x402)</h3>
-                        <span class="text-sm text-gray-400">65% confidence</span>
+                <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+                    <!-- Narrative header -->
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-semibold text-gray-100">Solana Spot ETF Momentum Driving Institutional Narrative</h3>
+                            <div class="flex items-center gap-2">
+                                
+                                <span class="text-sm text-gray-400">80%</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-2">Helius Blog coverage of 16 U.S. Solana Spot ETFs represents a structural legitimization event for Solana as an institutional asset class. This directly impacts the 91.5% circulating supply ratio by creating new demand sinks for SOL tokens. The convergence of ETF filings with Solana&#39;s #2 chain TVL ranking ($6.37B) suggests coordinated institutional positioning across custody, staking yield, and regulated access products.</p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Accelerating</span>
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">0 repos</span>
+                            
+                        </div>
                     </div>
-                    <p class="text-gray-400 text-sm mt-2">SIGNIA (207 stars) and x402-deploy represent early but high-signal AI-agent-on-chain development. The star-to-fork ratio (222:21) suggests more spectators than builders, indicating narrative-stage rather than production-stage. However, AI trading bots appearing in trending repos and DeFi tooling repos blurring the line between automated trading and agent frameworks point to Solana&#39;s high throughput (1,179 non-vote TPS) as an execution layer for autonomous agents.</p>
-                    <div class="mt-2 flex gap-2">
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Emerging</span>
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">1 repos</span>
-                    </div>
+
+                    <!-- Linked findings -->
+                    
                 </div>
                 
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">Firedancer Validator Client Maturation and Network Diversification</h3>
-                        <span class="text-sm text-gray-400">82% confidence</span>
+                <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+                    <!-- Narrative header -->
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-semibold text-gray-100">AI Agent Infrastructure on Solana (SIGNIA and x402)</h3>
+                            <div class="flex items-center gap-2">
+                                
+                                <span class="text-sm text-gray-400">65%</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-2">SIGNIA (207 stars) and x402-deploy represent early but high-signal AI-agent-on-chain development. The star-to-fork ratio (222:21) suggests more spectators than builders, indicating narrative-stage rather than production-stage. However, AI trading bots appearing in trending repos and DeFi tooling repos blurring the line between automated trading and agent frameworks point to Solana&#39;s high throughput (1,179 non-vote TPS) as an execution layer for autonomous agents.</p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Emerging</span>
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">1 repos</span>
+                            
+                        </div>
                     </div>
-                    <p class="text-gray-400 text-sm mt-2">Firedancer (1,396 stars) remains the most-starred active Solana repo this week, and Agave 3.1 updates signal dual-client maturation — a structural resilience upgrade. The combination of validator software development with network performance data (3,175 TPS total, epoch 925 at 27.2% progress, 487B cumulative transactions) suggests a chain operating at production scale while actively upgrading its consensus infrastructure.</p>
-                    <div class="mt-2 flex gap-2">
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Stable</span>
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">0 repos</span>
-                    </div>
+
+                    <!-- Linked findings -->
+                    
                 </div>
                 
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">Memecoin and Token Launch Tooling Proliferation</h3>
-                        <span class="text-sm text-gray-400">85% confidence</span>
+                <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+                    <!-- Narrative header -->
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-semibold text-gray-100">Firedancer Validator Client Maturation and Network Diversification</h3>
+                            <div class="flex items-center gap-2">
+                                
+                                <span class="text-sm text-gray-400">82%</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-2">Firedancer (1,396 stars) remains the most-starred active Solana repo this week, and Agave 3.1 updates signal dual-client maturation — a structural resilience upgrade. The combination of validator software development with network performance data (3,175 TPS total, epoch 925 at 27.2% progress, 487B cumulative transactions) suggests a chain operating at production scale while actively upgrading its consensus infrastructure.</p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Stable</span>
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">0 repos</span>
+                            
+                        </div>
                     </div>
-                    <p class="text-gray-400 text-sm mt-2">Multiple signals converge on memecoin infrastructure: fdv.lol (93 stars), Meteora-DBC-Bagsapp-Bundler (43 stars), pumpdev.io (20 stars), and Metaplex Token Metadata processing 4,176 tx/hr. This represents an industrialization of token launch infrastructure on Solana. The high Metaplex throughput relative to NFT marketplace activity (Tensor at only 28 tx/hr) suggests token metadata creation vastly outpaces secondary trading, consistent with a high-churn launch economy.</p>
-                    <div class="mt-2 flex gap-2">
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Stable</span>
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">1 repos</span>
-                    </div>
+
+                    <!-- Linked findings -->
+                    
                 </div>
                 
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">RWA Emergence as Third-Largest Non-CEX DeFi Category</h3>
-                        <span class="text-sm text-gray-400">72% confidence</span>
+                <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+                    <!-- Narrative header -->
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-semibold text-gray-100">Memecoin and Token Launch Tooling Proliferation</h3>
+                            <div class="flex items-center gap-2">
+                                
+                                <span class="text-sm text-gray-400">85%</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-2">Multiple signals converge on memecoin infrastructure: fdv.lol (93 stars), Meteora-DBC-Bagsapp-Bundler (43 stars), pumpdev.io (20 stars), and Metaplex Token Metadata processing 4,176 tx/hr. This represents an industrialization of token launch infrastructure on Solana. The high Metaplex throughput relative to NFT marketplace activity (Tensor at only 28 tx/hr) suggests token metadata creation vastly outpaces secondary trading, consistent with a high-churn launch economy.</p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Stable</span>
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">1 repos</span>
+                            
+                        </div>
                     </div>
-                    <p class="text-gray-400 text-sm mt-2">Real World Assets hold $6.9B in TVL across 19 Solana protocols, making RWA the largest non-CEX, non-liquid-staking DeFi category — surpassing even lending ($5.5B). This is structurally significant because RWA TVL represents external capital entering the Solana ecosystem rather than recycled crypto-native liquidity. Notable divergence: zero new GitHub repos in the RWA category despite the large TVL, suggesting moat consolidation by existing protocols.</p>
-                    <div class="mt-2 flex gap-2">
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Stable</span>
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">0 repos</span>
+
+                    <!-- Linked findings -->
+                    
+                </div>
+                
+                <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+                    <!-- Narrative header -->
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-semibold text-gray-100">RWA Emergence as Third-Largest Non-CEX DeFi Category</h3>
+                            <div class="flex items-center gap-2">
+                                
+                                <span class="text-sm text-gray-400">72%</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-2">Real World Assets hold $6.9B in TVL across 19 Solana protocols, making RWA the largest non-CEX, non-liquid-staking DeFi category — surpassing even lending ($5.5B). This is structurally significant because RWA TVL represents external capital entering the Solana ecosystem rather than recycled crypto-native liquidity. Notable divergence: zero new GitHub repos in the RWA category despite the large TVL, suggesting moat consolidation by existing protocols.</p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">Stable</span>
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">0 repos</span>
+                            
+                        </div>
                     </div>
+
+                    <!-- Linked findings -->
+                    
                 </div>
                 
             </div>
@@ -185,19 +468,19 @@
             <!-- Severity Breakdown -->
             <div class="grid grid-cols-5 gap-3 mb-6">
                 <div class="bg-red-900/20 border border-red-800/50 rounded-lg p-3 text-center">
-                    <p class="text-2xl font-bold text-red-500">2</p>
+                    <p class="text-2xl font-bold text-red-500">3</p>
                     <p class="text-gray-400 text-xs">Critical</p>
                 </div>
                 <div class="bg-orange-900/20 border border-orange-800/50 rounded-lg p-3 text-center">
-                    <p class="text-2xl font-bold text-orange-400">100</p>
+                    <p class="text-2xl font-bold text-orange-400">2</p>
                     <p class="text-gray-400 text-xs">High</p>
                 </div>
                 <div class="bg-yellow-900/20 border border-yellow-800/50 rounded-lg p-3 text-center">
-                    <p class="text-2xl font-bold text-yellow-400">35</p>
+                    <p class="text-2xl font-bold text-yellow-400">2</p>
                     <p class="text-gray-400 text-xs">Medium</p>
                 </div>
                 <div class="bg-blue-900/20 border border-blue-800/50 rounded-lg p-3 text-center">
-                    <p class="text-2xl font-bold text-blue-400">18</p>
+                    <p class="text-2xl font-bold text-blue-400">0</p>
                     <p class="text-gray-400 text-xs">Low</p>
                 </div>
                 <div class="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 text-center">
@@ -223,39 +506,12 @@
                     <tbody>
                         
                         <tr class="border-b border-gray-800/50 hover:bg-gray-900/50">
-                            <td class="py-2 px-3 text-gray-200 font-medium">raydium-clmm</td>
-                            <td class="py-2 px-3 text-center text-gray-600">0</td>
-                            <td class="py-2 px-3 text-center text-orange-400 font-bold">38</td>
-                            <td class="py-2 px-3 text-center text-yellow-400">12</td>
-                            <td class="py-2 px-3 text-center text-gray-500">10</td>
-                            <td class="py-2 px-3 text-center text-gray-300 font-medium">60</td>
-                        </tr>
-                        
-                        <tr class="border-b border-gray-800/50 hover:bg-gray-900/50">
-                            <td class="py-2 px-3 text-gray-200 font-medium">switchboard</td>
-                            <td class="py-2 px-3 text-center text-gray-600">0</td>
-                            <td class="py-2 px-3 text-center text-orange-400 font-bold">32</td>
-                            <td class="py-2 px-3 text-center text-yellow-400">19</td>
+                            <td class="py-2 px-3 text-gray-200 font-medium">shielded-pool-pinocchio-solana</td>
+                            <td class="py-2 px-3 text-center text-red-500 font-bold">3</td>
+                            <td class="py-2 px-3 text-center text-orange-400 font-bold">2</td>
+                            <td class="py-2 px-3 text-center text-yellow-400">2</td>
                             <td class="py-2 px-3 text-center text-gray-500">0</td>
-                            <td class="py-2 px-3 text-center text-gray-300 font-medium">51</td>
-                        </tr>
-                        
-                        <tr class="border-b border-gray-800/50 hover:bg-gray-900/50">
-                            <td class="py-2 px-3 text-gray-200 font-medium">tensor-marketplace</td>
-                            <td class="py-2 px-3 text-center text-red-500 font-bold">2</td>
-                            <td class="py-2 px-3 text-center text-orange-400 font-bold">27</td>
-                            <td class="py-2 px-3 text-center text-yellow-400">3</td>
-                            <td class="py-2 px-3 text-center text-gray-500">0</td>
-                            <td class="py-2 px-3 text-center text-gray-300 font-medium">32</td>
-                        </tr>
-                        
-                        <tr class="border-b border-gray-800/50 hover:bg-gray-900/50">
-                            <td class="py-2 px-3 text-gray-200 font-medium">raydium-cp-swap</td>
-                            <td class="py-2 px-3 text-center text-gray-600">0</td>
-                            <td class="py-2 px-3 text-center text-orange-400 font-bold">3</td>
-                            <td class="py-2 px-3 text-center text-yellow-400">1</td>
-                            <td class="py-2 px-3 text-center text-gray-500">8</td>
-                            <td class="py-2 px-3 text-center text-gray-300 font-medium">12</td>
+                            <td class="py-2 px-3 text-center text-gray-300 font-medium">7</td>
                         </tr>
                         
                     </tbody>
@@ -264,238 +520,43 @@
             
         </section>
 
-        <!-- Top Findings (Critical + High, grouped) -->
-        
-        <section>
-            <h2 class="text-xl font-bold mb-6 text-gray-200">Critical &amp; High Severity Findings</h2>
-            <div class="space-y-4">
-                
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">Potential Arbitrary CPI Target</h3>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">2 instances across 1 repos</span>
-                            <span class="text-sm font-medium text-red-500">Critical</span>
-                        </div>
-                    </div>
-                    <p class="text-gray-400 text-sm mt-2">Cross-program invocation where the target program ID may come from user input. Attacker could redirect the CPI to a malicious program.</p>
-                    <div class="mt-2 text-sm text-gray-300"><span class="text-gray-500">Fix:</span> Hardcode the target program ID or validate it against a known constant.</div>
-                    <div class="mt-2 flex flex-wrap gap-1">
-                        
-                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">tensor-marketplace</span>
-                        
-                    </div>
-                    
-                    <details class="mt-2">
-                        <summary class="text-xs text-gray-500 hover:text-gray-400">Example locations</summary>
-                        <div class="mt-1 space-y-0.5">
-                            
-                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/noop.rs:52</div>
-                            
-                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/tensor-marketplace/program/src/instructions/noop.rs:68</div>
-                            
-                        </div>
-                    </details>
-                    
-                </div>
-                
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">Unvalidated remaining_accounts Usage</h3>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">66 instances across 4 repos</span>
-                            <span class="text-sm font-medium text-orange-400">High</span>
-                        </div>
-                    </div>
-                    <p class="text-gray-400 text-sm mt-2">Iterating over ctx.remaining_accounts without validation. Attacker can pass arbitrary accounts, potentially bypassing security checks.</p>
-                    <div class="mt-2 text-sm text-gray-300"><span class="text-gray-500">Fix:</span> Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status.</div>
-                    <div class="mt-2 flex flex-wrap gap-1">
-                        
-                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">raydium-clmm</span>
-                        
-                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">raydium-cp-swap</span>
-                        
-                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">switchboard</span>
-                        
-                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">tensor-marketplace</span>
-                        
-                    </div>
-                    
-                    <details class="mt-2">
-                        <summary class="text-xs text-gray-500 hover:text-gray-400">Example locations</summary>
-                        <div class="mt-1 space-y-0.5">
-                            
-                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/admin/update_amm_config.rs:24</div>
-                            
-                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/admin/update_amm_config.rs:28</div>
-                            
-                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/decrease_liquidity.rs:162</div>
-                            
-                        </div>
-                    </details>
-                    
-                </div>
-                
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">Potential Type Cosplay (Missing Discriminator)</h3>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">25 instances across 4 repos</span>
-                            <span class="text-sm font-medium text-orange-400">High</span>
-                        </div>
-                    </div>
-                    <p class="text-gray-400 text-sm mt-2">Account deserialized with try_from_slice or manual deserialization without discriminator check. An attacker could pass a different account type with same data layout.</p>
-                    <div class="mt-2 text-sm text-gray-300"><span class="text-gray-500">Fix:</span> Use Anchor&#39;s Account&#60;&#62; type (auto-checks discriminator) or manually verify the 8-byte discriminator.</div>
-                    <div class="mt-2 flex flex-wrap gap-1">
-                        
-                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">raydium-clmm</span>
-                        
-                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">raydium-cp-swap</span>
-                        
-                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">switchboard</span>
-                        
-                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">tensor-marketplace</span>
-                        
-                    </div>
-                    
-                    <details class="mt-2">
-                        <summary class="text-xs text-gray-500 hover:text-gray-400">Example locations</summary>
-                        <div class="mt-1 space-y-0.5">
-                            
-                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/operation_account.rs:252</div>
-                            
-                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/oracle.rs:207</div>
-                            
-                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs:1794</div>
-                            
-                        </div>
-                    </details>
-                    
-                </div>
-                
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">Unsafe Block in Solana Program</h3>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">9 instances across 1 repos</span>
-                            <span class="text-sm font-medium text-orange-400">High</span>
-                        </div>
-                    </div>
-                    <p class="text-gray-400 text-sm mt-2">Function contains an unsafe block. Requires careful review for memory safety.</p>
-                    <div class="mt-2 text-sm text-gray-300"><span class="text-gray-500">Fix:</span> Review unsafe block for soundness. Consider safe alternatives.</div>
-                    <div class="mt-2 flex flex-wrap gap-1">
-                        
-                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">switchboard</span>
-                        
-                    </div>
-                    
-                    <details class="mt-2">
-                        <summary class="text-xs text-gray-500 hover:text-gray-400">Example locations</summary>
-                        <div class="mt-1 space-y-0.5">
-                            
-                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/switchboard/src/instruction_compat.rs:73</div>
-                            
-                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/oracle_quote/feed_info.rs:182</div>
-                            
-                            <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/switchboard/src/on_demand/oracle_quote/quote_verifier.rs:1252</div>
-                            
-                        </div>
-                    </details>
-                    
-                </div>
-                
-            </div>
-        </section>
+        <!-- Orphan Findings -->
         
 
-        <!-- Remaining Findings (grouped, collapsible) -->
-        
+        <!-- Methodology -->
         <section>
             <details>
-                <summary class="text-xl font-bold mb-6 text-gray-200 flex items-center gap-2">
-                    <span class="text-sm bg-gray-800 px-2 py-1 rounded">+2 patterns</span>
-                    All Medium/Low/Info Findings
-                </summary>
-                <div class="space-y-3 mt-4">
-                    
-                    <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-800/50">
-                        <div class="flex items-start justify-between">
-                            <span class="text-sm text-gray-200">PDA Bump Seed Not Stored/Verified</span>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">35 instances</span>
-                                <span class="text-xs text-yellow-400">Medium</span>
-                            </div>
-                        </div>
-                        <p class="text-gray-500 text-xs mt-1">PDA created with find_program_address but bump not stored in account data. Without bump verification, account can be re-derived with wrong bump.</p>
-                        <div class="mt-1 flex flex-wrap gap-1">
-                            
-                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">raydium-clmm</span>
-                            
-                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">raydium-cp-swap</span>
-                            
-                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">switchboard</span>
-                            
-                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">tensor-marketplace</span>
-                            
-                        </div>
-                        
-                        <details class="mt-1">
-                            <summary class="text-xs text-gray-600 hover:text-gray-500">Example locations</summary>
-                            <div class="mt-1 space-y-0.5">
-                                
-                                <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/swap.rs:900</div>
-                                
-                                <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs:848</div>
-                                
-                                <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/states/pool.rs:1119</div>
-                                
-                            </div>
-                        </details>
-                        
+                <summary class="text-xl font-bold text-gray-200">Methodology</summary>
+                <div class="mt-4 text-sm text-gray-400 space-y-3">
+                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                        <h4 class="text-gray-300 font-medium mb-2">Signal Collection</h4>
+                        <p>Parallel collection from GitHub API (new Solana repos, star velocity), Solana RPC (TPS, program activity), blog scraping (Helius, Jito, Marinade), and DeFiLlama (TVL, protocol rankings). Signals aggregated by category with cross-source validation.</p>
                     </div>
-                    
-                    <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-800/50">
-                        <div class="flex items-start justify-between">
-                            <span class="text-sm text-gray-200">Verbose Error Logging May Leak Account Keys</span>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">18 instances</span>
-                                <span class="text-xs text-blue-400">Low</span>
-                            </div>
-                        </div>
-                        <p class="text-gray-500 text-xs mt-1">Function logs account keys via msg!(). This may leak sensitive information.</p>
-                        <div class="mt-1 flex flex-wrap gap-1">
-                            
-                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">raydium-clmm</span>
-                            
-                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">raydium-cp-swap</span>
-                            
-                        </div>
-                        
-                        <details class="mt-1">
-                            <summary class="text-xs text-gray-600 hover:text-gray-500">Example locations</summary>
-                            <div class="mt-1 space-y-0.5">
-                                
-                                <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/admin/update_amm_config.rs:64</div>
-                                
-                                <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/admin/update_amm_config.rs:74</div>
-                                
-                                <div class="text-xs text-gray-600">/home/suds/Documents/superteam/st-audit/repos/raydium-clmm/programs/amm/src/instructions/create_pool.rs:123</div>
-                                
-                            </div>
-                        </details>
-                        
+                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                        <h4 class="text-gray-300 font-medium mb-2">Narrative Synthesis</h4>
+                        <p>LLM identifies growth narratives from aggregated signals, assigning confidence scores and linking to active repositories. Narrative confidence drives scan budget allocation.</p>
                     </div>
-                    
+                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                        <h4 class="text-gray-300 font-medium mb-2">Security Scanning</h4>
+                        <p>Static analysis: 10 regex + 3 AST vulnerability patterns (SOL-001..010, AST-001..003). Deep review: multi-turn LLM agent investigates trust boundaries, fund flows, and state transitions with protocol-specific focus areas informed by the narrative context.</p>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                        <h4 class="text-gray-300 font-medium mb-2">Adversarial Validation</h4>
+                        <p>A separate LLM pass attempts to disprove each finding — reading cited code paths, checking for mitigations, and verifying attack reachability. Findings are classified as Confirmed, Disputed (severity downgraded), or Dismissed (removed).</p>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                        <h4 class="text-gray-300 font-medium mb-2">Cross-Reference & Risk Scoring</h4>
+                        <p>Deterministic risk scoring per narrative: <code class="text-gray-300">risk = sum(severity_weight * validation_multiplier * narrative_confidence)</code>. Severity weights: Critical=10, High=5, Medium=2, Low=0.5. Validation multipliers: Confirmed=1.0, Disputed=0.5, Unvalidated=0.7.</p>
+                    </div>
                 </div>
             </details>
         </section>
-        
     </main>
 
     <footer class="border-t border-gray-800 px-6 py-4 mt-12">
         <div class="max-w-6xl mx-auto text-center text-gray-600 text-sm">
             <p>Generated by <span class="gradient-text font-semibold">SolGuard</span> — autonomous Solana ecosystem intelligence</p>
-            <p class="mt-1">Pipeline: GitHub API + Solana RPC + blog scraping → LLM narrative synthesis → security scanning (13 patterns) → cross-referenced report</p>
+            <p class="mt-1">Pipeline: signal collection → narrative synthesis → narrative-informed scanning → adversarial validation → cross-referenced risk scoring</p>
         </div>
     </footer>
 </body>
