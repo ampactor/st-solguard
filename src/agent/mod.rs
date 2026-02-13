@@ -1,11 +1,13 @@
-// Autonomous orchestration: narrative → target selection → scan → combined report
+// Autonomous orchestration: narrative → target selection → scan → validate → cross-ref → report
+
+pub mod cross_ref;
 
 use crate::LlmOverride;
 use crate::config::Config;
-use crate::llm::LlmClient;
-use crate::narrative;
+use crate::llm::{ModelRouter, TaskKind};
+use crate::narrative::{self, Narrative};
 use crate::output;
-use crate::security;
+use crate::security::{self, agent_review::ScanContext};
 use anyhow::Result;
 use std::path::PathBuf;
 use tracing::info;
@@ -14,15 +16,15 @@ use tracing::info;
 ///
 /// 1. Detect narratives (what's growing in the Solana ecosystem)
 /// 2. Identify active repos from narratives
-/// 3. Select scan targets (unaudited, in emerging sectors)
-/// 4. Scan each target for vulnerabilities (static or deep agent review)
-/// 5. Cross-reference: which narratives have security risks
-/// 6. Generate combined intelligence report
+/// 3. Clone + scan with narrative context + validate per-repo
+/// 4. Cross-reference: narratives × findings with risk scoring
+/// 5. Generate narrative-centric intelligence report
 pub async fn run_full_pipeline(
     config_path: PathBuf,
     output_path: PathBuf,
     repos_dir: PathBuf,
     llm_override: Option<LlmOverride>,
+    router: ModelRouter,
     deep: bool,
 ) -> Result<()> {
     info!("SolGuard autonomous pipeline starting");
@@ -41,39 +43,23 @@ pub async fn run_full_pipeline(
         .collect();
     info!(count = targets.len(), "scan targets identified");
 
-    // Phase 3: Clone and scan targets
+    // Phase 3: Clone + scan + validate per-repo
     info!(
         "Phase 3: Scanning targets{}...",
         if deep { " (deep agent review)" } else { "" }
     );
     std::fs::create_dir_all(&repos_dir)?;
 
-    // Build LLM client for deep scanning if needed
-    let (llm, agent_config) = if deep {
-        let cfg = Config::load(&config_path).unwrap_or_default();
-        let provider = llm_override
-            .as_ref()
-            .map(|o| o.provider.clone())
-            .unwrap_or_else(|| cfg.llm.provider.clone());
-        let model = llm_override
-            .as_ref()
-            .map(|o| o.model.clone())
-            .unwrap_or_else(|| cfg.llm.model.clone());
-        let client = LlmClient::from_config(
-            provider,
-            model,
-            cfg.llm.max_tokens,
-            cfg.llm.api_key_env.clone(),
-            cfg.llm.base_url.clone(),
-        )?;
-        (Some(client), cfg.agent_review)
+    let default_agent_config = if deep {
+        Config::load(&config_path)
+            .map(|c| c.agent_review)
+            .unwrap_or_default()
     } else {
-        (None, crate::config::AgentReviewConfig::default())
+        crate::config::AgentReviewConfig::default()
     };
 
     let mut all_findings = Vec::new();
     for target in &targets {
-        // Clone repo if needed
         let repo_name = target.split('/').next_back().unwrap_or(target);
         let repo_path = repos_dir.join(repo_name);
 
@@ -96,15 +82,85 @@ pub async fn run_full_pipeline(
             }
         }
 
-        // Scan: deep agent review or static-only
-        let result = if let Some(ref llm) = llm {
-            security::scan_repo_deep(&repo_path, llm, &agent_config).await
+        // Build narrative-informed scan context + dynamic budget
+        let (scan_ctx, repo_agent_config) = if deep {
+            let narrative = narratives.iter().find(|n| {
+                n.active_repos
+                    .iter()
+                    .any(|ar| ar.split('/').next_back() == Some(repo_name))
+            });
+            match narrative {
+                Some(n) => {
+                    let (budget_turns, budget_cost) =
+                        security::agent_review::compute_budget(n.confidence, targets.len());
+
+                    let siblings: Vec<String> = all_findings
+                        .iter()
+                        .take(10)
+                        .map(|f: &security::SecurityFinding| {
+                            format!("[{}] {}", f.severity, f.title)
+                        })
+                        .collect();
+
+                    let ctx = ScanContext {
+                        protocol_category: infer_protocol_category(n),
+                        narrative_summary: Some(n.summary.clone()),
+                        sibling_findings: siblings,
+                    };
+
+                    let cfg = crate::config::AgentReviewConfig {
+                        max_turns: budget_turns,
+                        max_tokens: default_agent_config.max_tokens,
+                        cost_limit_usd: budget_cost,
+                    };
+                    (Some(ctx), cfg)
+                }
+                None => (
+                    None,
+                    crate::config::AgentReviewConfig {
+                        max_turns: default_agent_config.max_turns,
+                        max_tokens: default_agent_config.max_tokens,
+                        cost_limit_usd: default_agent_config.cost_limit_usd,
+                    },
+                ),
+            }
+        } else {
+            (
+                None,
+                crate::config::AgentReviewConfig {
+                    max_turns: default_agent_config.max_turns,
+                    max_tokens: default_agent_config.max_tokens,
+                    cost_limit_usd: default_agent_config.cost_limit_usd,
+                },
+            )
+        };
+
+        let result = if deep {
+            let llm = router.client_for(TaskKind::DeepInvestigation);
+            security::scan_repo_deep(&repo_path, llm, &repo_agent_config, scan_ctx.as_ref()).await
         } else {
             security::scan_repo(&repo_path).await
         };
 
         match result {
-            Ok(findings) => {
+            Ok(mut findings) => {
+                // Validate findings for this repo
+                if deep && !findings.is_empty() {
+                    info!(repo = %target, count = findings.len(), "validating findings");
+                    if let Err(e) = security::validator::validate_findings(
+                        &mut findings,
+                        &router,
+                        &repo_path,
+                        &repo_agent_config,
+                    )
+                    .await
+                    {
+                        tracing::warn!(
+                            repo = %target, error = %e,
+                            "validation failed, keeping unvalidated"
+                        );
+                    }
+                }
                 info!(repo = %target, findings = findings.len(), "scan complete");
                 all_findings.extend(findings);
             }
@@ -116,40 +172,14 @@ pub async fn run_full_pipeline(
 
     // Phase 4: Cross-reference narratives with security findings
     info!("Phase 4: Cross-referencing narratives with security findings...");
-    for narrative in &mut narratives {
-        narrative.finding_count = all_findings
-            .iter()
-            .filter(|f| {
-                let path = f.file_path.to_string_lossy();
-                let repo = if let Some(idx) = path.find("repos/") {
-                    let after = &path[idx + 6..];
-                    after.split('/').next().unwrap_or(after).to_string()
-                } else {
-                    f.file_path
-                        .components()
-                        .find_map(|c| {
-                            let s = c.as_os_str().to_string_lossy();
-                            if s != "." && s != ".." && s != "repos" {
-                                Some(s.into_owned())
-                            } else {
-                                None
-                            }
-                        })
-                        .unwrap_or_else(|| "unknown".into())
-                };
-                narrative
-                    .active_repos
-                    .iter()
-                    .any(|ar| ar.split('/').next_back().is_some_and(|tail| tail == repo))
-            })
-            .count();
-        if narrative.finding_count > 0 {
-            info!(
-                "  {} -> {} findings",
-                narrative.title, narrative.finding_count
-            );
-        }
-    }
+    let _links = cross_ref::analyze(&mut narratives, &all_findings, &router).await?;
+
+    // Sort narratives by risk_score descending for the report
+    narratives.sort_by(|a, b| {
+        b.risk_score
+            .partial_cmp(&a.risk_score)
+            .unwrap_or(std::cmp::Ordering::Equal)
+    });
 
     // Phase 5: Generate combined report
     info!("Phase 5: Generating combined report...");
@@ -169,4 +199,28 @@ pub async fn run_full_pipeline(
     );
 
     Ok(())
+}
+
+/// Infer protocol category from narrative content for scan context.
+fn infer_protocol_category(narrative: &Narrative) -> Option<String> {
+    let text = format!("{} {}", narrative.title, narrative.summary).to_lowercase();
+    if text.contains("dex")
+        || text.contains("amm")
+        || text.contains("swap")
+        || text.contains("exchange")
+    {
+        Some("DEX".into())
+    } else if text.contains("lend") || text.contains("borrow") || text.contains("loan") {
+        Some("Lending".into())
+    } else if text.contains("stak") || text.contains("liquid") {
+        Some("Staking".into())
+    } else if text.contains("nft") || text.contains("marketplace") || text.contains("collectible") {
+        Some("NFT/Marketplace".into())
+    } else if text.contains("privacy") || text.contains("mixer") || text.contains("anon") {
+        Some("Privacy".into())
+    } else if text.contains("bridge") || text.contains("cross-chain") {
+        Some("Bridge".into())
+    } else {
+        None
+    }
 }

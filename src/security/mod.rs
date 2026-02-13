@@ -14,6 +14,15 @@ use walkdir::WalkDir;
 
 // -- Public types (used by agent + output) --
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub enum ValidationStatus {
+    #[default]
+    Unvalidated,
+    Confirmed,
+    Disputed,
+    Dismissed,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityFinding {
     pub title: String,
@@ -22,6 +31,10 @@ pub struct SecurityFinding {
     pub file_path: PathBuf,
     pub line_number: usize,
     pub remediation: String,
+    #[serde(default)]
+    pub validation_status: ValidationStatus,
+    #[serde(default)]
+    pub validation_reasoning: Option<String>,
 }
 
 // -- Internal types (used by scanners) --
@@ -71,6 +84,8 @@ impl From<Finding> for SecurityFinding {
             file_path: f.file_path,
             line_number: f.line_number,
             remediation: f.remediation,
+            validation_status: ValidationStatus::Unvalidated,
+            validation_reasoning: None,
         }
     }
 }
@@ -153,6 +168,7 @@ pub async fn scan_repo_deep(
     repo_path: &Path,
     llm: &LlmClient,
     config: &AgentReviewConfig,
+    scan_context: Option<&agent_review::ScanContext>,
 ) -> Result<Vec<SecurityFinding>> {
     // Run static scan first for triage context
     let static_findings = scan_repo(repo_path).await.unwrap_or_default();
@@ -163,7 +179,7 @@ pub async fn scan_repo_deep(
     };
 
     let (agent_findings, stats) =
-        agent_review::investigate(llm, repo_path, config, triage.as_deref()).await?;
+        agent_review::investigate(llm, repo_path, config, triage.as_deref(), scan_context).await?;
 
     info!(
         agent_findings = agent_findings.len(),
@@ -187,6 +203,8 @@ pub async fn scan_repo_deep(
                 .unwrap_or_default(),
             line_number: 0,
             remediation: af.remediation,
+            validation_status: ValidationStatus::Unvalidated,
+            validation_reasoning: None,
         })
         .collect();
 

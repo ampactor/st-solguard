@@ -12,6 +12,8 @@ pub struct Config {
     pub defi_llama: DefiLlamaConfig,
     pub llm: LlmConfig,
     #[serde(default)]
+    pub models: Option<ModelsConfig>,
+    #[serde(default)]
     pub agent_review: AgentReviewConfig,
 }
 
@@ -119,6 +121,26 @@ pub struct LlmConfig {
     pub base_url: Option<String>,
 }
 
+/// Per-task model configuration for the `[models]` config section.
+#[derive(Debug, Deserialize)]
+pub struct ModelConfig {
+    #[serde(default)]
+    pub provider: crate::llm::Provider,
+    pub model: String,
+    pub base_url: Option<String>,
+    pub api_key_env: Option<String>,
+    pub max_tokens: Option<u32>,
+}
+
+/// Task-specific model routing: overrides `[llm]` for specific pipeline stages.
+#[derive(Debug, Deserialize)]
+pub struct ModelsConfig {
+    pub narrative: Option<ModelConfig>,
+    pub investigation: Option<ModelConfig>,
+    pub validation: Option<ModelConfig>,
+    pub cross_reference: Option<ModelConfig>,
+}
+
 // Defaults
 fn default_github_token() -> String {
     std::env::var("GITHUB_TOKEN").unwrap_or_default()
@@ -212,6 +234,7 @@ impl Default for Config {
                 api_key_env: None,
                 base_url: None,
             },
+            models: None,
             agent_review: AgentReviewConfig::default(),
         }
     }

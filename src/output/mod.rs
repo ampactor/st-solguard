@@ -1,8 +1,8 @@
 use crate::narrative::Narrative;
-use crate::security::SecurityFinding;
+use crate::security::{SecurityFinding, ValidationStatus};
 use askama::Template;
 use chrono::Utc;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Template)]
 #[template(path = "solguard_report.html")]
@@ -17,11 +17,13 @@ struct SolGuardReport {
     severity_medium: usize,
     severity_low: usize,
     severity_info: usize,
+    confirmed_count: usize,
+    disputed_count: usize,
+    has_validation: bool,
     narratives: Vec<NarrativeView>,
     repo_summaries: Vec<RepoSummary>,
-    top_findings: Vec<GroupedFindingView>,
-    remaining_findings: Vec<GroupedFindingView>,
-    remaining_count: usize,
+    orphan_findings: Vec<FindingView>,
+    orphan_count: usize,
 }
 
 #[allow(dead_code)] // fields used by Askama template
@@ -32,18 +34,24 @@ struct NarrativeView {
     trend: String,
     repo_count: usize,
     finding_count: usize,
+    risk_score_fmt: String,
+    risk_level: String,
+    risk_class: String,
+    linked_findings: Vec<FindingView>,
 }
 
 #[allow(dead_code)] // fields used by Askama template
-struct GroupedFindingView {
+struct FindingView {
     title: String,
     severity: String,
     severity_class: String,
     description: String,
     remediation: String,
-    instance_count: usize,
-    repos: Vec<String>,
-    sample_files: Vec<String>,
+    file_location: String,
+    repo: String,
+    validation_badge: String,
+    validation_class: String,
+    validation_reasoning: String,
 }
 
 #[allow(dead_code)] // fields used by Askama template
@@ -66,20 +74,37 @@ fn severity_class(severity: &str) -> String {
     }
 }
 
-fn severity_order(severity: &str) -> u8 {
-    match severity {
-        "Critical" => 0,
-        "High" => 1,
-        "Medium" => 2,
-        "Low" => 3,
-        _ => 4,
+fn risk_class(level: &str) -> String {
+    match level {
+        "Critical" => "bg-red-900/30 text-red-400 border-red-800/50".into(),
+        "High" => "bg-orange-900/30 text-orange-400 border-orange-800/50".into(),
+        "Medium" => "bg-yellow-900/30 text-yellow-400 border-yellow-800/50".into(),
+        "Low" => "bg-blue-900/30 text-blue-400 border-blue-800/50".into(),
+        _ => "bg-gray-800 text-gray-400 border-gray-700".into(),
+    }
+}
+
+fn validation_class(status: &ValidationStatus) -> String {
+    match status {
+        ValidationStatus::Confirmed => "bg-green-900/30 text-green-400".into(),
+        ValidationStatus::Disputed => "bg-yellow-900/30 text-yellow-400".into(),
+        ValidationStatus::Unvalidated => "bg-gray-800 text-gray-400".into(),
+        ValidationStatus::Dismissed => "bg-red-900/30 text-red-400".into(),
+    }
+}
+
+fn validation_badge(status: &ValidationStatus) -> String {
+    match status {
+        ValidationStatus::Confirmed => "Confirmed".into(),
+        ValidationStatus::Disputed => "Disputed".into(),
+        ValidationStatus::Unvalidated => "Unvalidated".into(),
+        ValidationStatus::Dismissed => "Dismissed".into(),
     }
 }
 
 /// Extract repo name from a finding's file path (first component under repos/).
 fn repo_name(f: &SecurityFinding) -> String {
     let path = f.file_path.to_string_lossy();
-    // Look for "repos/<name>/..." pattern
     if let Some(idx) = path.find("repos/") {
         let after = &path[idx + 6..];
         if let Some(slash) = after.find('/') {
@@ -87,7 +112,6 @@ fn repo_name(f: &SecurityFinding) -> String {
         }
         return after.to_string();
     }
-    // Fallback: use first meaningful path component
     f.file_path
         .components()
         .find_map(|c| {
@@ -101,71 +125,72 @@ fn repo_name(f: &SecurityFinding) -> String {
         .unwrap_or_else(|| "unknown".into())
 }
 
-fn group_findings(findings: &[SecurityFinding]) -> Vec<GroupedFindingView> {
-    // Group by (title, severity)
-    let mut groups: BTreeMap<(String, String), Vec<&SecurityFinding>> = BTreeMap::new();
-    for f in findings {
-        groups
-            .entry((f.title.clone(), f.severity.clone()))
-            .or_default()
-            .push(f);
+fn finding_to_view(f: &SecurityFinding) -> FindingView {
+    FindingView {
+        title: f.title.clone(),
+        severity_class: severity_class(&f.severity),
+        description: f.description.clone(),
+        remediation: f.remediation.clone(),
+        file_location: format!("{}:{}", f.file_path.display(), f.line_number),
+        repo: repo_name(f),
+        validation_badge: validation_badge(&f.validation_status),
+        validation_class: validation_class(&f.validation_status),
+        validation_reasoning: f.validation_reasoning.clone().unwrap_or_default(),
+        severity: f.severity.clone(),
     }
-
-    let mut result: Vec<GroupedFindingView> = groups
-        .into_iter()
-        .map(|((title, severity), instances)| {
-            let mut repos: Vec<String> = instances
-                .iter()
-                .map(|f| repo_name(f))
-                .collect::<std::collections::BTreeSet<_>>()
-                .into_iter()
-                .collect();
-            repos.sort();
-
-            let sample_files: Vec<String> = instances
-                .iter()
-                .take(3)
-                .map(|f| format!("{}:{}", f.file_path.display(), f.line_number))
-                .collect();
-
-            GroupedFindingView {
-                title,
-                severity_class: severity_class(&severity),
-                description: instances[0].description.clone(),
-                remediation: instances[0].remediation.clone(),
-                instance_count: instances.len(),
-                repos,
-                sample_files,
-                severity,
-            }
-        })
-        .collect();
-
-    // Sort by severity (Critical first), then by instance count descending
-    result.sort_by(|a, b| {
-        severity_order(&a.severity)
-            .cmp(&severity_order(&b.severity))
-            .then(b.instance_count.cmp(&a.instance_count))
-    });
-
-    result
 }
 
 pub fn render_combined_report(
     narratives: &[Narrative],
     findings: &[SecurityFinding],
 ) -> anyhow::Result<String> {
+    // Build narrative views with linked findings
+    let mut linked_finding_indices: BTreeSet<usize> = BTreeSet::new();
+
     let narrative_views: Vec<NarrativeView> = narratives
         .iter()
-        .map(|n| NarrativeView {
-            title: n.title.clone(),
-            summary: n.summary.clone(),
-            confidence_pct: (n.confidence * 100.0) as u32,
-            trend: n.trend.clone(),
-            repo_count: n.active_repos.len(),
-            finding_count: n.finding_count,
+        .map(|n| {
+            let mut linked = Vec::new();
+            for (_, indices) in &n.repo_findings {
+                for &idx in indices {
+                    if let Some(f) = findings.get(idx) {
+                        linked.push(finding_to_view(f));
+                        linked_finding_indices.insert(idx);
+                    }
+                }
+            }
+            // Sort linked findings by severity
+            linked.sort_by(|a, b| severity_order(&a.severity).cmp(&severity_order(&b.severity)));
+
+            let rl = if n.risk_level.is_empty() {
+                "None"
+            } else {
+                &n.risk_level
+            };
+            NarrativeView {
+                title: n.title.clone(),
+                summary: n.summary.clone(),
+                confidence_pct: (n.confidence * 100.0) as u32,
+                trend: n.trend.clone(),
+                repo_count: n.active_repos.len(),
+                finding_count: n.finding_count,
+                risk_score_fmt: format!("{:.1}", n.risk_score),
+                risk_level: rl.to_string(),
+                risk_class: risk_class(rl),
+                linked_findings: linked,
+            }
         })
         .collect();
+
+    // Orphan findings: not linked to any narrative
+    let mut orphan_findings: Vec<FindingView> = findings
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| !linked_finding_indices.contains(i))
+        .map(|(_, f)| finding_to_view(f))
+        .collect();
+    orphan_findings.sort_by(|a, b| severity_order(&a.severity).cmp(&severity_order(&b.severity)));
+    let orphan_count = orphan_findings.len();
 
     // Severity counts
     let severity_critical = findings.iter().filter(|f| f.severity == "Critical").count();
@@ -174,6 +199,19 @@ pub fn render_combined_report(
     let severity_low = findings.iter().filter(|f| f.severity == "Low").count();
     let severity_info = findings.iter().filter(|f| f.severity == "Info").count();
     let critical_count = severity_critical + severity_high;
+
+    // Validation counts
+    let confirmed_count = findings
+        .iter()
+        .filter(|f| f.validation_status == ValidationStatus::Confirmed)
+        .count();
+    let disputed_count = findings
+        .iter()
+        .filter(|f| f.validation_status == ValidationStatus::Disputed)
+        .count();
+    let has_validation = findings
+        .iter()
+        .any(|f| f.validation_status != ValidationStatus::Unvalidated);
 
     // Per-repo summaries
     let mut repo_map: BTreeMap<String, [usize; 5]> = BTreeMap::new();
@@ -199,27 +237,9 @@ pub fn render_combined_report(
             total: c.iter().sum(),
         })
         .collect();
-    // Sort by total findings descending
     repo_summaries.sort_by(|a, b| b.total.cmp(&a.total));
 
     let repo_count = repo_summaries.len();
-
-    // Group findings: top (Critical/High) vs remaining
-    let top_findings_raw: Vec<SecurityFinding> = findings
-        .iter()
-        .filter(|f| f.severity == "Critical" || f.severity == "High")
-        .cloned()
-        .collect();
-    let top_findings = group_findings(&top_findings_raw);
-
-    let remaining_findings_raw: Vec<SecurityFinding> = findings
-        .iter()
-        .filter(|f| f.severity != "Critical" && f.severity != "High")
-        .cloned()
-        .collect();
-    let remaining_findings = group_findings(&remaining_findings_raw);
-
-    let remaining_count = remaining_findings.len();
 
     let report = SolGuardReport {
         generated_at: Utc::now().format("%Y-%m-%d %H:%M UTC").to_string(),
@@ -232,14 +252,26 @@ pub fn render_combined_report(
         severity_medium,
         severity_low,
         severity_info,
+        confirmed_count,
+        disputed_count,
+        has_validation,
         narratives: narrative_views,
         repo_summaries,
-        top_findings,
-        remaining_findings,
-        remaining_count,
+        orphan_findings,
+        orphan_count,
     };
 
     report
         .render()
         .map_err(|e| anyhow::anyhow!("template render: {e}"))
+}
+
+fn severity_order(severity: &str) -> u8 {
+    match severity {
+        "Critical" => 0,
+        "High" => 1,
+        "Medium" => 2,
+        "Low" => 3,
+        _ => 4,
+    }
 }

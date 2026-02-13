@@ -39,6 +39,47 @@ fn build_llm_client(
     Ok(client)
 }
 
+/// Build a ModelRouter from config, with optional CLI override.
+///
+/// If `--model` is set, all task kinds use the override. Otherwise, per-task
+/// models from `[models]` override the default `[llm]` client.
+fn build_model_router(
+    cfg: &config::Config,
+    llm_override: Option<&LlmOverride>,
+) -> Result<llm::ModelRouter> {
+    let default = build_llm_client(&cfg.llm, llm_override)?;
+
+    // CLI override applies uniformly — no per-task routing
+    if llm_override.is_some() {
+        return Ok(llm::ModelRouter::new(default));
+    }
+
+    let mut router = llm::ModelRouter::new(default);
+
+    if let Some(ref models) = cfg.models {
+        let pairs: [(&Option<config::ModelConfig>, llm::TaskKind); 4] = [
+            (&models.narrative, llm::TaskKind::NarrativeSynthesis),
+            (&models.investigation, llm::TaskKind::DeepInvestigation),
+            (&models.validation, llm::TaskKind::Validation),
+            (&models.cross_reference, llm::TaskKind::CrossReference),
+        ];
+        for (model_cfg, kind) in pairs {
+            if let Some(mc) = model_cfg {
+                let client = llm::LlmClient::from_config(
+                    mc.provider.clone(),
+                    mc.model.clone(),
+                    mc.max_tokens.unwrap_or(cfg.llm.max_tokens),
+                    mc.api_key_env.clone(),
+                    mc.base_url.clone(),
+                )?;
+                router = router.with_client(kind, client);
+            }
+        }
+    }
+
+    Ok(router)
+}
+
 fn make_llm_override(provider: Option<String>, model: Option<String>) -> Option<LlmOverride> {
     if provider.is_none() && model.is_none() {
         return None;
@@ -47,6 +88,7 @@ fn make_llm_override(provider: Option<String>, model: Option<String>) -> Option<
         .map(|p| match p.as_str() {
             "anthropic" => llm::Provider::Anthropic,
             "openai" => llm::Provider::OpenAi,
+            "groq" => llm::Provider::Groq,
             _ => llm::Provider::OpenRouter,
         })
         .unwrap_or_default();
@@ -237,7 +279,9 @@ async fn main() -> Result<()> {
             deep,
         } => {
             let llm_override = make_llm_override(provider, model);
-            agent::run_full_pipeline(config, output, repos_dir, llm_override, deep).await
+            let cfg = config::Config::load(&config).unwrap_or_default();
+            let router = build_model_router(&cfg, llm_override.as_ref())?;
+            agent::run_full_pipeline(config, output, repos_dir, llm_override, router, deep).await
         }
         Command::Narratives {
             config,
@@ -263,7 +307,7 @@ async fn main() -> Result<()> {
                 let cfg = config::Config::load(&config).unwrap_or_default();
                 let llm_override = make_llm_override(provider, model);
                 let llm = build_llm_client(&cfg.llm, llm_override.as_ref())?;
-                security::scan_repo_deep(&repo_path, &llm, &cfg.agent_review).await?
+                security::scan_repo_deep(&repo_path, &llm, &cfg.agent_review, None).await?
             } else {
                 security::scan_repo(&repo_path).await?
             };
@@ -290,7 +334,7 @@ async fn main() -> Result<()> {
             if let Some(limit) = cost_limit {
                 agent_config.cost_limit_usd = limit;
             }
-            let findings = security::scan_repo_deep(&repo_path, &llm, &agent_config).await?;
+            let findings = security::scan_repo_deep(&repo_path, &llm, &agent_config, None).await?;
             let json = serde_json::to_string_pretty(&findings)?;
             write_or_print(&json, output.as_deref())?;
             Ok(())
@@ -318,7 +362,8 @@ async fn main() -> Result<()> {
             // Phase 1: Investigate
             info!("phase 1: investigating repository");
             let (findings, inv_stats) =
-                security::agent_review::investigate(&llm, &repo_path, &agent_config, None).await?;
+                security::agent_review::investigate(&llm, &repo_path, &agent_config, None, None)
+                    .await?;
             info!(
                 findings = findings.len(),
                 turns = inv_stats.turns,

@@ -24,6 +24,12 @@ pub struct Narrative {
     pub active_repos: Vec<String>,
     #[serde(default)]
     pub finding_count: usize,
+    #[serde(default)]
+    pub risk_score: f64,
+    #[serde(default)]
+    pub risk_level: String,
+    #[serde(default)]
+    pub repo_findings: Vec<(String, Vec<usize>)>,
 }
 
 /// Run the full narrative detection pipeline from config.
@@ -116,6 +122,9 @@ pub async fn run_narrative_pipeline(
             trend: n.trend.to_string(),
             active_repos: n.active_repos,
             finding_count: 0,
+            risk_score: 0.0,
+            risk_level: String::new(),
+            repo_findings: Vec::new(),
         })
         .collect();
 
