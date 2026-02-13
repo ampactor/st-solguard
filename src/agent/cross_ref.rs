@@ -220,3 +220,38 @@ fn repo_name_from_path(path: &Path) -> String {
         })
         .unwrap_or_else(|| "unknown".into())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn validation_multiplier_values() {
+        assert!((validation_multiplier(&ValidationStatus::Confirmed) - 1.0).abs() < f64::EPSILON);
+        assert!((validation_multiplier(&ValidationStatus::Disputed) - 0.5).abs() < f64::EPSILON);
+        assert!((validation_multiplier(&ValidationStatus::Unvalidated) - 0.7).abs() < f64::EPSILON);
+        assert!((validation_multiplier(&ValidationStatus::Dismissed) - 0.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn repo_name_from_repos_prefix() {
+        assert_eq!(
+            repo_name_from_path(Path::new("repos/my-repo/src/lib.rs")),
+            "my-repo"
+        );
+        assert_eq!(
+            repo_name_from_path(Path::new("repos/other-repo/programs/vault.rs")),
+            "other-repo"
+        );
+    }
+
+    #[test]
+    fn repo_name_fallback_no_repos_prefix() {
+        assert_eq!(repo_name_from_path(Path::new("src/lib.rs")), "src");
+    }
+
+    #[test]
+    fn repo_name_just_filename() {
+        assert_eq!(repo_name_from_path(Path::new("lib.rs")), "lib.rs");
+    }
+}

@@ -514,3 +514,131 @@ pub fn format_triage_context(findings: &[super::SecurityFinding]) -> String {
     }
     out
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::security::{SecurityFinding, ValidationStatus};
+    use std::path::PathBuf;
+
+    // -- compute_budget --
+
+    #[test]
+    fn compute_budget_full_confidence_single_repo() {
+        let (turns, cost) = compute_budget(1.0, 1);
+        // depth = 1.0 * (1.0 / sqrt(1)) = 1.0
+        assert_eq!(turns, 30);
+        assert!((cost - 20.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn compute_budget_half_confidence_four_repos() {
+        let (turns, cost) = compute_budget(0.5, 4);
+        // depth = 0.5 * (1.0 / sqrt(4)) = 0.5 * 0.5 = 0.25
+        // turns = (30 * 0.25) = 7.5 → 7
+        // cost = (20 * 0.25) = 5.0
+        assert_eq!(turns, 7);
+        assert!((cost - 5.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn compute_budget_clamps_low() {
+        let (turns, cost) = compute_budget(1.0, 100);
+        // depth = 1.0 / sqrt(100) = 0.1
+        // turns = 3.0 → clamped to 5
+        // cost = 2.0
+        assert_eq!(turns, 5);
+        assert!((cost - 2.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn compute_budget_zero_confidence() {
+        let (turns, cost) = compute_budget(0.0, 1);
+        // depth = 0.0
+        // turns = 0 → clamped to 5
+        // cost = 0 → clamped to 2.0
+        assert_eq!(turns, 5);
+        assert!((cost - 2.0).abs() < f64::EPSILON);
+    }
+
+    // -- try_parse_findings --
+
+    const SAMPLE_FINDING_JSON: &str = r#"[{"title":"Test","severity":"High","description":"desc","evidence":["file.rs:1"],"attack_scenario":"attacker does X","remediation":"fix Y","confidence":0.9,"affected_files":["src/lib.rs"]}]"#;
+
+    #[test]
+    fn parse_findings_json_fence() {
+        let text = format!("```json\n{}\n```", SAMPLE_FINDING_JSON);
+        let findings = try_parse_findings(&text).unwrap();
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].title, "Test");
+        assert_eq!(findings[0].severity, "High");
+        assert!((findings[0].confidence - 0.9).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn parse_findings_bare_fence() {
+        let text = format!("```\n{}\n```", SAMPLE_FINDING_JSON);
+        let findings = try_parse_findings(&text).unwrap();
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].title, "Test");
+    }
+
+    #[test]
+    fn parse_findings_bare_json() {
+        let findings = try_parse_findings(SAMPLE_FINDING_JSON).unwrap();
+        assert_eq!(findings.len(), 1);
+        assert_eq!(findings[0].title, "Test");
+    }
+
+    #[test]
+    fn parse_findings_prose_then_json() {
+        let text = format!("Here are my findings:\n{}", SAMPLE_FINDING_JSON);
+        let findings = try_parse_findings(&text).unwrap();
+        assert_eq!(findings.len(), 1);
+    }
+
+    #[test]
+    fn parse_findings_empty_array() {
+        let findings = try_parse_findings("[]").unwrap();
+        assert!(findings.is_empty());
+    }
+
+    #[test]
+    fn parse_findings_no_json() {
+        assert!(try_parse_findings("I found nothing noteworthy.").is_none());
+    }
+
+    #[test]
+    fn parse_findings_malformed() {
+        assert!(try_parse_findings("[{broken").is_none());
+    }
+
+    #[test]
+    fn parse_findings_object_not_array() {
+        assert!(try_parse_findings(r#"{"title":"Test"}"#).is_none());
+    }
+
+    // -- format_triage_context --
+
+    #[test]
+    fn triage_context_empty() {
+        assert_eq!(format_triage_context(&[]), "No scanner findings to verify.");
+    }
+
+    #[test]
+    fn triage_context_with_findings() {
+        let findings = vec![SecurityFinding {
+            title: "Missing Signer".into(),
+            severity: "High".into(),
+            description: "desc".into(),
+            file_path: PathBuf::from("src/lib.rs"),
+            line_number: 10,
+            remediation: "add check".into(),
+            validation_status: ValidationStatus::Unvalidated,
+            validation_reasoning: None,
+        }];
+        let text = format_triage_context(&findings);
+        assert!(text.contains("[High]"));
+        assert!(text.contains("Missing Signer"));
+    }
+}

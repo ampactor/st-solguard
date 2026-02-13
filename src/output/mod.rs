@@ -275,3 +275,79 @@ fn severity_order(severity: &str) -> u8 {
         _ => 4,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    fn make_test_finding() -> SecurityFinding {
+        SecurityFinding {
+            title: "Test".into(),
+            severity: "Medium".into(),
+            description: "desc".into(),
+            file_path: PathBuf::from("repos/test-repo/src/lib.rs"),
+            line_number: 1,
+            remediation: "fix it".into(),
+            validation_status: ValidationStatus::Unvalidated,
+            validation_reasoning: None,
+        }
+    }
+
+    #[test]
+    fn severity_class_values() {
+        assert!(severity_class("Critical").contains("red"));
+        assert!(severity_class("High").contains("orange"));
+        assert!(severity_class("Medium").contains("yellow"));
+        assert!(severity_class("Low").contains("blue"));
+        assert!(severity_class("Info").contains("gray"));
+    }
+
+    #[test]
+    fn risk_class_values() {
+        assert!(risk_class("Critical").contains("red"));
+        assert!(risk_class("High").contains("orange"));
+        assert!(risk_class("Medium").contains("yellow"));
+        assert!(risk_class("Low").contains("blue"));
+        assert!(risk_class("None").contains("gray"));
+    }
+
+    #[test]
+    fn validation_badge_values() {
+        assert_eq!(validation_badge(&ValidationStatus::Confirmed), "Confirmed");
+        assert_eq!(validation_badge(&ValidationStatus::Disputed), "Disputed");
+        assert_eq!(
+            validation_badge(&ValidationStatus::Unvalidated),
+            "Unvalidated"
+        );
+        assert_eq!(validation_badge(&ValidationStatus::Dismissed), "Dismissed");
+    }
+
+    #[test]
+    fn severity_order_values() {
+        assert_eq!(severity_order("Critical"), 0);
+        assert_eq!(severity_order("High"), 1);
+        assert_eq!(severity_order("Medium"), 2);
+        assert_eq!(severity_order("Low"), 3);
+        assert_eq!(severity_order("Info"), 4);
+        assert!(severity_order("Critical") < severity_order("High"));
+    }
+
+    #[test]
+    fn repo_name_from_repos_path() {
+        let f = SecurityFinding {
+            file_path: PathBuf::from("repos/my-repo/src/lib.rs"),
+            ..make_test_finding()
+        };
+        assert_eq!(repo_name(&f), "my-repo");
+    }
+
+    #[test]
+    fn repo_name_fallback() {
+        let f = SecurityFinding {
+            file_path: PathBuf::from("src/lib.rs"),
+            ..make_test_finding()
+        };
+        assert_eq!(repo_name(&f), "src");
+    }
+}

@@ -256,3 +256,97 @@ impl Config {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn full_config_parses() {
+        let toml = r#"
+[github]
+token = "ghp_test"
+topics = ["solana", "anchor"]
+min_stars = 10
+
+[solana]
+rpc_url = "https://api.mainnet-beta.solana.com"
+
+[[solana.tracked_programs]]
+name = "Test"
+address = "11111111111111111111111111111111"
+category = "DeFi"
+
+[social]
+[[social.sources]]
+name = "Test Blog"
+url = "https://example.com"
+
+[defi_llama]
+enabled = true
+top_protocols = 5
+
+[llm]
+provider = "openrouter"
+model = "test-model"
+max_tokens = 2048
+
+[agent_review]
+max_turns = 15
+max_tokens = 4096
+cost_limit_usd = 10.0
+
+[models]
+[models.narrative]
+provider = "groq"
+model = "qwen3-32b"
+[models.validation]
+provider = "anthropic"
+model = "claude-sonnet-4-5-20250929"
+"#;
+        let config: Config = toml::from_str(toml).unwrap();
+        assert_eq!(config.github.token, "ghp_test");
+        assert_eq!(config.github.topics.len(), 2);
+        assert_eq!(config.agent_review.max_turns, 15);
+        assert!((config.agent_review.cost_limit_usd - 10.0).abs() < f64::EPSILON);
+        assert!(config.models.is_some());
+        let models = config.models.unwrap();
+        assert!(models.narrative.is_some());
+        assert!(models.validation.is_some());
+        assert!(models.investigation.is_none());
+    }
+
+    #[test]
+    fn minimal_config_uses_defaults() {
+        let toml = r#"
+[github]
+token = "ghp_test"
+
+[solana]
+rpc_url = "https://api.mainnet-beta.solana.com"
+
+[llm]
+model = "test"
+"#;
+        let config: Config = toml::from_str(toml).unwrap();
+        assert!(config.models.is_none());
+        assert_eq!(config.agent_review.max_turns, 30);
+        assert_eq!(config.agent_review.max_tokens, 8192);
+        assert!((config.agent_review.cost_limit_usd - 20.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn agent_review_config_defaults() {
+        let arc = AgentReviewConfig::default();
+        assert_eq!(arc.max_turns, 30);
+        assert_eq!(arc.max_tokens, 8192);
+        assert!((arc.cost_limit_usd - 20.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn validate_rejects_empty_token() {
+        let mut config = Config::default();
+        config.github.token = String::new();
+        assert!(config.validate().is_err());
+    }
+}

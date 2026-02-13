@@ -17,7 +17,7 @@ scraper = "0.25"
 syn = { version = "2", features = ["full", "visit"] }
 quote = "1"
 proc-macro2 = { version = "1", features = ["span-locations"] }
-regex = "1.12"
+fancy-regex = "0.14"
 walkdir = "2.5"
 thiserror = "2"
 anyhow = "1"

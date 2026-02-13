@@ -149,3 +149,99 @@ impl<'ast> Visit<'ast> for SolanaVisitor {
         syn::visit::visit_item(self, node);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn ast_001_positive() {
+        let code = r#"
+use anchor_lang::prelude::*;
+
+#[derive(Accounts)]
+pub struct MyAccounts<'info> {
+    pub user: AccountInfo<'info>,
+}
+"#;
+        let findings = scan(code, Path::new("test.rs")).unwrap();
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.pattern_id == "AST-001" && f.severity == Severity::Medium),
+            "expected AST-001 Medium finding, got: {findings:?}"
+        );
+    }
+
+    #[test]
+    fn ast_001_negative() {
+        let code = r#"
+use anchor_lang::prelude::*;
+
+#[derive(Accounts)]
+pub struct MyAccounts<'info> {
+    /// CHECK: validated in handler
+    pub user: AccountInfo<'info>,
+}
+"#;
+        let findings = scan(code, Path::new("test.rs")).unwrap();
+        assert!(
+            !findings.iter().any(|f| f.pattern_id == "AST-001"),
+            "unexpected AST-001 finding: {findings:?}"
+        );
+    }
+
+    #[test]
+    fn ast_002_positive() {
+        let code = r#"
+fn log_stuff() {
+    msg!("{}", account.key());
+}
+"#;
+        let findings = scan(code, Path::new("test.rs")).unwrap();
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.pattern_id == "AST-002" && f.severity == Severity::Low),
+            "expected AST-002 Low finding, got: {findings:?}"
+        );
+    }
+
+    #[test]
+    fn ast_003_positive() {
+        let code = r#"
+fn dangerous() {
+    unsafe {
+        std::ptr::write(ptr, value);
+    }
+}
+"#;
+        let findings = scan(code, Path::new("test.rs")).unwrap();
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.pattern_id == "AST-003" && f.severity == Severity::High),
+            "expected AST-003 High finding, got: {findings:?}"
+        );
+    }
+
+    #[test]
+    fn ast_003_negative() {
+        let code = r#"
+fn safe_function() {
+    let x = 42;
+}
+"#;
+        let findings = scan(code, Path::new("test.rs")).unwrap();
+        assert!(
+            !findings.iter().any(|f| f.pattern_id == "AST-003"),
+            "unexpected AST-003 finding: {findings:?}"
+        );
+    }
+
+    #[test]
+    fn unparseable_returns_err() {
+        assert!(scan("fn {{{", Path::new("test.rs")).is_err());
+    }
+}

@@ -516,3 +516,116 @@ fn try_parse_verdicts(text: &str) -> Option<Vec<VerdictEntry>> {
 
     None
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // -- parse_verdict --
+
+    #[test]
+    fn verdict_confirmed_lowercase() {
+        assert!(matches!(parse_verdict("confirmed"), Verdict::Confirmed));
+    }
+
+    #[test]
+    fn verdict_confirmed_mixed_case() {
+        assert!(matches!(parse_verdict("Confirmed"), Verdict::Confirmed));
+    }
+
+    #[test]
+    fn verdict_dismissed_lowercase() {
+        assert!(matches!(parse_verdict("dismissed"), Verdict::Dismissed));
+    }
+
+    #[test]
+    fn verdict_dismissed_mixed_case() {
+        assert!(matches!(parse_verdict("Dismissed"), Verdict::Dismissed));
+    }
+
+    #[test]
+    fn verdict_disputed() {
+        assert!(matches!(parse_verdict("disputed"), Verdict::Disputed));
+    }
+
+    #[test]
+    fn verdict_unknown_falls_back_to_disputed() {
+        assert!(matches!(parse_verdict("unknown"), Verdict::Disputed));
+    }
+
+    #[test]
+    fn verdict_empty_falls_back_to_disputed() {
+        assert!(matches!(parse_verdict(""), Verdict::Disputed));
+    }
+
+    // -- downgrade_severity --
+
+    #[test]
+    fn downgrade_critical() {
+        assert_eq!(downgrade_severity("Critical"), "High");
+    }
+
+    #[test]
+    fn downgrade_high() {
+        assert_eq!(downgrade_severity("High"), "Medium");
+    }
+
+    #[test]
+    fn downgrade_medium() {
+        assert_eq!(downgrade_severity("Medium"), "Low");
+    }
+
+    #[test]
+    fn downgrade_low() {
+        assert_eq!(downgrade_severity("Low"), "Info");
+    }
+
+    #[test]
+    fn downgrade_info() {
+        assert_eq!(downgrade_severity("Info"), "Info");
+    }
+
+    // -- try_parse_verdicts --
+
+    const SAMPLE_VERDICT_JSON: &str = r#"[{"title":"Missing Signer","verdict":"Confirmed","reasoning":"The check is indeed missing"}]"#;
+
+    #[test]
+    fn parse_verdicts_json_fence() {
+        let text = format!("```json\n{}\n```", SAMPLE_VERDICT_JSON);
+        let entries = try_parse_verdicts(&text).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].title, "Missing Signer");
+        assert_eq!(entries[0].verdict, "Confirmed");
+    }
+
+    #[test]
+    fn parse_verdicts_bare_fence() {
+        let text = format!("```\n{}\n```", SAMPLE_VERDICT_JSON);
+        let entries = try_parse_verdicts(&text).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].title, "Missing Signer");
+    }
+
+    #[test]
+    fn parse_verdicts_bare_json() {
+        let entries = try_parse_verdicts(SAMPLE_VERDICT_JSON).unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].verdict, "Confirmed");
+    }
+
+    #[test]
+    fn parse_verdicts_empty_array() {
+        let entries = try_parse_verdicts("[]").unwrap();
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn parse_verdicts_no_json() {
+        assert!(try_parse_verdicts("No issues found.").is_none());
+    }
+
+    #[test]
+    fn parse_verdicts_malformed() {
+        assert!(try_parse_verdicts("[{broken").is_none());
+    }
+}
