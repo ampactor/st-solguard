@@ -2,6 +2,7 @@ use crate::error::{Error, Result};
 use crate::http::HttpClient;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
+use std::collections::HashMap;
 use tracing::{debug, warn};
 
 /// LLM provider — determines API format and endpoint.
@@ -14,6 +15,7 @@ pub enum Provider {
     /// Any OpenAI-compatible API (together.ai, local ollama, etc.)
     #[serde(rename = "openai")]
     OpenAi,
+    Groq,
 }
 
 impl Provider {
@@ -22,6 +24,7 @@ impl Provider {
             Self::Anthropic => "https://api.anthropic.com/v1",
             Self::OpenRouter => "https://openrouter.ai/api/v1",
             Self::OpenAi => "http://localhost:11434/v1",
+            Self::Groq => "https://api.groq.com/openai/v1",
         }
     }
 
@@ -30,6 +33,7 @@ impl Provider {
             Self::Anthropic => "ANTHROPIC_API_KEY",
             Self::OpenRouter => "OPENROUTER_API_KEY",
             Self::OpenAi => "OPENAI_API_KEY",
+            Self::Groq => "GROQ_API_KEY",
         }
     }
 }
@@ -263,7 +267,7 @@ impl LlmClient {
 
         match self.provider {
             Provider::Anthropic => self.complete_anthropic(system, user_message).await,
-            Provider::OpenRouter | Provider::OpenAi => {
+            Provider::OpenRouter | Provider::OpenAi | Provider::Groq => {
                 self.complete_openai(system, user_message).await
             }
         }
@@ -386,7 +390,7 @@ impl LlmClient {
         );
         match self.provider {
             Provider::Anthropic => self.converse_anthropic(system, messages, tools).await,
-            Provider::OpenRouter | Provider::OpenAi => {
+            Provider::OpenRouter | Provider::OpenAi | Provider::Groq => {
                 self.converse_openai(system, messages, tools).await
             }
         }
@@ -729,6 +733,52 @@ fn extract_json(text: &str) -> &str {
         return &text[start..=end];
     }
     text
+}
+
+// -- Task-based model routing --
+
+/// What kind of LLM task is being performed — determines which model to use.
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub enum TaskKind {
+    /// Narrative synthesis: fast, structured JSON output.
+    NarrativeSynthesis,
+    /// Deep security investigation: best reasoning, code analysis.
+    DeepInvestigation,
+    /// Adversarial finding validation.
+    Validation,
+    /// Cross-reference analysis between narratives and findings.
+    CrossReference,
+}
+
+/// Routes LLM requests to different models based on task kind.
+pub struct ModelRouter {
+    clients: HashMap<TaskKind, LlmClient>,
+    default: LlmClient,
+}
+
+impl ModelRouter {
+    pub fn new(default: LlmClient) -> Self {
+        Self {
+            clients: HashMap::new(),
+            default,
+        }
+    }
+
+    pub fn with_client(mut self, kind: TaskKind, client: LlmClient) -> Self {
+        self.clients.insert(kind, client);
+        self
+    }
+
+    /// Get the LLM client for a specific task kind. Falls back to the default.
+    pub fn client_for(&self, kind: TaskKind) -> &LlmClient {
+        self.clients.get(&kind).unwrap_or(&self.default)
+    }
+
+    /// Get the default LLM client.
+    #[allow(dead_code)]
+    pub fn default_client(&self) -> &LlmClient {
+        &self.default
+    }
 }
 
 /// Estimate cost in USD for a single API call based on token usage and model.

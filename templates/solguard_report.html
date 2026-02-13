@@ -64,37 +64,79 @@
             </div>
         </div>
 
-        <!-- Cross-reference insight -->
+        <!-- Executive Summary -->
         {% if narrative_count > 0 && finding_count > 0 %}
         <div class="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
             <h3 class="text-yellow-400 font-semibold mb-2">Ecosystem Risk Map</h3>
-            <p class="text-gray-300 text-sm">SolGuard detected <strong>{{ narrative_count }}</strong> growth narratives and scanned <strong>{{ repo_count }}</strong> repos from those emerging sectors. Found <strong>{{ finding_count }}</strong> vulnerability patterns — {{ critical_count }} at Critical/High severity. Repos in fast-growing sectors often ship faster than they audit.</p>
+            <p class="text-gray-300 text-sm">SolGuard detected <strong>{{ narrative_count }}</strong> growth narratives and scanned <strong>{{ repo_count }}</strong> repos from those emerging sectors. Found <strong>{{ finding_count }}</strong> vulnerability patterns — {{ critical_count }} at Critical/High severity.{% if has_validation %} Adversarial validation confirmed <strong>{{ confirmed_count }}</strong> findings and disputed <strong>{{ disputed_count }}</strong>.{% endif %} Repos in fast-growing sectors often ship faster than they audit.</p>
         </div>
         {% endif %}
 
-        <!-- Narratives -->
+        <!-- Narratives with linked findings -->
         <section>
-            <h2 class="text-xl font-bold mb-6 text-gray-200">Emerging Narratives</h2>
+            <h2 class="text-xl font-bold mb-6 text-gray-200">Narrative Risk Analysis</h2>
             {% if narratives.is_empty() %}
             <p class="text-gray-500">No narratives detected yet. Run with live API keys to populate.</p>
             {% else %}
-            <div class="space-y-4">
+            <div class="space-y-6">
                 {% for n in narratives %}
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">{{ n.title }}</h3>
-                        <span class="text-sm text-gray-400">{{ n.confidence_pct }}% confidence</span>
+                <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
+                    <!-- Narrative header -->
+                    <div class="p-5">
+                        <div class="flex items-start justify-between">
+                            <h3 class="font-semibold text-gray-100">{{ n.title }}</h3>
+                            <div class="flex items-center gap-2">
+                                {% if n.risk_level != "None" %}
+                                <span class="text-xs px-2 py-0.5 rounded border {{ n.risk_class }}">Risk: {{ n.risk_score_fmt }}</span>
+                                {% endif %}
+                                <span class="text-sm text-gray-400">{{ n.confidence_pct }}%</span>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-2">{{ n.summary }}</p>
+                        <div class="mt-2 flex gap-2">
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.trend }}</span>
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.repo_count }} repos</span>
+                            {% if n.finding_count > 0 %}
+                            <span class="text-xs bg-red-900/30 text-red-400 px-2 py-0.5 rounded">
+                                {{ n.finding_count }} findings
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
-                    <p class="text-gray-400 text-sm mt-2">{{ n.summary }}</p>
-                    <div class="mt-2 flex gap-2">
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.trend }}</span>
-                        <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.repo_count }} repos</span>
-                        {% if n.finding_count > 0 %}
-                        <span class="text-xs bg-red-900/30 text-red-400 px-2 py-0.5 rounded">
-                            {{ n.finding_count }} security findings
-                        </span>
-                        {% endif %}
+
+                    <!-- Linked findings -->
+                    {% if !n.linked_findings.is_empty() %}
+                    <div class="border-t border-gray-800 bg-gray-950/50 px-5 py-3">
+                        <p class="text-xs text-gray-500 mb-3 uppercase tracking-wider">Linked Vulnerabilities</p>
+                        <div class="space-y-3">
+                            {% for f in n.linked_findings %}
+                            <div class="bg-gray-900/50 rounded p-3 border border-gray-800/50">
+                                <div class="flex items-start justify-between">
+                                    <span class="text-sm text-gray-200 font-medium">{{ f.title }}</span>
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="text-xs {{ f.validation_class }} px-1.5 py-0.5 rounded">{{ f.validation_badge }}</span>
+                                        <span class="text-xs font-medium {{ f.severity_class }}">{{ f.severity }}</span>
+                                    </div>
+                                </div>
+                                <p class="text-gray-500 text-xs mt-1">{{ f.description }}</p>
+                                <div class="mt-1.5 flex flex-wrap gap-3 text-xs">
+                                    <span class="text-gray-500"><span class="text-gray-600">Fix:</span> {{ f.remediation }}</span>
+                                </div>
+                                <div class="mt-1 flex items-center gap-3 text-xs text-gray-600">
+                                    <span>{{ f.repo }}</span>
+                                    <span>{{ f.file_location }}</span>
+                                </div>
+                                {% if !f.validation_reasoning.is_empty() %}
+                                <details class="mt-1">
+                                    <summary class="text-xs text-gray-600 hover:text-gray-500">Validation reasoning</summary>
+                                    <p class="text-xs text-gray-500 mt-1">{{ f.validation_reasoning }}</p>
+                                </details>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
@@ -160,89 +202,71 @@
             {% endif %}
         </section>
 
-        <!-- Top Findings (Critical + High, grouped) -->
-        {% if !top_findings.is_empty() %}
-        <section>
-            <h2 class="text-xl font-bold mb-6 text-gray-200">Critical &amp; High Severity Findings</h2>
-            <div class="space-y-4">
-                {% for f in top_findings %}
-                <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
-                    <div class="flex items-start justify-between">
-                        <h3 class="font-semibold text-gray-100">{{ f.title }}</h3>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ f.instance_count }} instances across {{ f.repos.len() }} repos</span>
-                            <span class="text-sm font-medium {{ f.severity_class }}">{{ f.severity }}</span>
-                        </div>
-                    </div>
-                    <p class="text-gray-400 text-sm mt-2">{{ f.description }}</p>
-                    <div class="mt-2 text-sm text-gray-300"><span class="text-gray-500">Fix:</span> {{ f.remediation }}</div>
-                    <div class="mt-2 flex flex-wrap gap-1">
-                        {% for repo in f.repos %}
-                        <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">{{ repo }}</span>
-                        {% endfor %}
-                    </div>
-                    {% if !f.sample_files.is_empty() %}
-                    <details class="mt-2">
-                        <summary class="text-xs text-gray-500 hover:text-gray-400">Example locations</summary>
-                        <div class="mt-1 space-y-0.5">
-                            {% for path in f.sample_files %}
-                            <div class="text-xs text-gray-600">{{ path }}</div>
-                            {% endfor %}
-                        </div>
-                    </details>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </section>
-        {% endif %}
-
-        <!-- Remaining Findings (grouped, collapsible) -->
-        {% if !remaining_findings.is_empty() %}
+        <!-- Orphan Findings -->
+        {% if !orphan_findings.is_empty() %}
         <section>
             <details>
                 <summary class="text-xl font-bold mb-6 text-gray-200 flex items-center gap-2">
-                    <span class="text-sm bg-gray-800 px-2 py-1 rounded">+{{ remaining_count }} patterns</span>
-                    All Medium/Low/Info Findings
+                    <span class="text-sm bg-gray-800 px-2 py-1 rounded">+{{ orphan_count }}</span>
+                    Unlinked Findings
                 </summary>
+                <p class="text-gray-500 text-sm mb-4">Findings not associated with any detected narrative.</p>
                 <div class="space-y-3 mt-4">
-                    {% for f in remaining_findings %}
+                    {% for f in orphan_findings %}
                     <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-800/50">
                         <div class="flex items-start justify-between">
                             <span class="text-sm text-gray-200">{{ f.title }}</span>
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded">{{ f.instance_count }} instances</span>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs {{ f.validation_class }} px-1.5 py-0.5 rounded">{{ f.validation_badge }}</span>
                                 <span class="text-xs {{ f.severity_class }}">{{ f.severity }}</span>
                             </div>
                         </div>
                         <p class="text-gray-500 text-xs mt-1">{{ f.description }}</p>
-                        <div class="mt-1 flex flex-wrap gap-1">
-                            {% for repo in f.repos %}
-                            <span class="text-xs bg-gray-800/50 text-gray-500 px-1.5 py-0.5 rounded">{{ repo }}</span>
-                            {% endfor %}
+                        <div class="mt-1 flex items-center gap-3 text-xs text-gray-600">
+                            <span>{{ f.repo }}</span>
+                            <span>{{ f.file_location }}</span>
                         </div>
-                        {% if !f.sample_files.is_empty() %}
-                        <details class="mt-1">
-                            <summary class="text-xs text-gray-600 hover:text-gray-500">Example locations</summary>
-                            <div class="mt-1 space-y-0.5">
-                                {% for path in f.sample_files %}
-                                <div class="text-xs text-gray-600">{{ path }}</div>
-                                {% endfor %}
-                            </div>
-                        </details>
-                        {% endif %}
                     </div>
                     {% endfor %}
                 </div>
             </details>
         </section>
         {% endif %}
+
+        <!-- Methodology -->
+        <section>
+            <details>
+                <summary class="text-xl font-bold text-gray-200">Methodology</summary>
+                <div class="mt-4 text-sm text-gray-400 space-y-3">
+                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                        <h4 class="text-gray-300 font-medium mb-2">Signal Collection</h4>
+                        <p>Parallel collection from GitHub API (new Solana repos, star velocity), Solana RPC (TPS, program activity), blog scraping (Helius, Jito, Marinade), and DeFiLlama (TVL, protocol rankings). Signals aggregated by category with cross-source validation.</p>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                        <h4 class="text-gray-300 font-medium mb-2">Narrative Synthesis</h4>
+                        <p>LLM identifies growth narratives from aggregated signals, assigning confidence scores and linking to active repositories. Narrative confidence drives scan budget allocation.</p>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                        <h4 class="text-gray-300 font-medium mb-2">Security Scanning</h4>
+                        <p>Static analysis: 10 regex + 3 AST vulnerability patterns (SOL-001..010, AST-001..003). Deep review: multi-turn LLM agent investigates trust boundaries, fund flows, and state transitions with protocol-specific focus areas informed by the narrative context.</p>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                        <h4 class="text-gray-300 font-medium mb-2">Adversarial Validation</h4>
+                        <p>A separate LLM pass attempts to disprove each finding — reading cited code paths, checking for mitigations, and verifying attack reachability. Findings are classified as Confirmed, Disputed (severity downgraded), or Dismissed (removed).</p>
+                    </div>
+                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                        <h4 class="text-gray-300 font-medium mb-2">Cross-Reference & Risk Scoring</h4>
+                        <p>Deterministic risk scoring per narrative: <code class="text-gray-300">risk = sum(severity_weight * validation_multiplier * narrative_confidence)</code>. Severity weights: Critical=10, High=5, Medium=2, Low=0.5. Validation multipliers: Confirmed=1.0, Disputed=0.5, Unvalidated=0.7.</p>
+                    </div>
+                </div>
+            </details>
+        </section>
     </main>
 
     <footer class="border-t border-gray-800 px-6 py-4 mt-12">
         <div class="max-w-6xl mx-auto text-center text-gray-600 text-sm">
             <p>Generated by <span class="gradient-text font-semibold">SolGuard</span> — autonomous Solana ecosystem intelligence</p>
-            <p class="mt-1">Pipeline: GitHub API + Solana RPC + blog scraping → LLM narrative synthesis → security scanning (13 patterns) → cross-referenced report</p>
+            <p class="mt-1">Pipeline: signal collection → narrative synthesis → narrative-informed scanning → adversarial validation → cross-referenced risk scoring</p>
         </div>
     </footer>
 </body>

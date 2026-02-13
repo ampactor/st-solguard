@@ -17,6 +17,22 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::Path;
 use tracing::{info, warn};
 
+/// Context from narrative detection to focus the security scan.
+pub struct ScanContext {
+    pub protocol_category: Option<String>,
+    pub narrative_summary: Option<String>,
+    pub sibling_findings: Vec<String>,
+}
+
+/// Compute investigation budget based on narrative confidence and target count.
+pub fn compute_budget(confidence: f64, repo_count: usize) -> (u32, f64) {
+    let depth = confidence * (1.0 / (repo_count as f64).sqrt());
+    (
+        (30.0 * depth).clamp(5.0, 40.0) as u32, // max_turns
+        (20.0 * depth).clamp(2.0, 30.0),        // cost_limit_usd
+    )
+}
+
 /// A verified finding from the agent review.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentFinding {
@@ -126,6 +142,7 @@ pub async fn investigate(
     repo_path: &Path,
     config: &AgentReviewConfig,
     triage_context: Option<&str>,
+    scan_context: Option<&ScanContext>,
 ) -> Result<(Vec<AgentFinding>, ReviewStats)> {
     let tools = agent_tools::tool_definitions();
     let mut messages: Vec<ConversationMessage> = Vec::new();
@@ -149,6 +166,43 @@ pub async fn investigate(
         initial_msg.push_str(&format!(
             "\n\n## Scanner Triage Results (verify each — most are false positives)\n\n{triage}"
         ));
+    }
+
+    if let Some(ctx) = scan_context {
+        if let Some(ref category) = ctx.protocol_category {
+            let focus = match category.to_lowercase().as_str() {
+                cat if cat.contains("dex") || cat.contains("amm") || cat.contains("swap") => {
+                    "Focus areas: sandwich attack vectors, LP manipulation, price oracle dependencies, slippage calculations, front-running opportunities"
+                }
+                cat if cat.contains("lend") || cat.contains("borrow") => {
+                    "Focus areas: liquidation logic correctness, interest rate manipulation, collateral valuation, bad debt scenarios, flash loan interactions"
+                }
+                cat if cat.contains("privacy") || cat.contains("mixer") => {
+                    "Focus areas: Merkle root commitment integrity, cryptographic proof verification, nullifier handling, deposit/withdrawal privacy guarantees"
+                }
+                cat if cat.contains("stak") || cat.contains("liquid") => {
+                    "Focus areas: reward distribution fairness, unstake timing attacks, slashing condition handling, validator selection manipulation"
+                }
+                cat if cat.contains("nft") || cat.contains("market") => {
+                    "Focus areas: royalty bypass, listing/delisting race conditions, bid manipulation, metadata integrity"
+                }
+                _ => {
+                    "Focus areas: access control, fund flow authorization, state transition integrity"
+                }
+            };
+            initial_msg.push_str(&format!(
+                "\n\n## Protocol Context\nCategory: {category}\n{focus}"
+            ));
+        }
+        if let Some(ref summary) = ctx.narrative_summary {
+            initial_msg.push_str(&format!("\n\nNarrative context: {summary}"));
+        }
+        if !ctx.sibling_findings.is_empty() {
+            initial_msg.push_str("\n\n## Findings from sibling repos in this narrative:");
+            for sf in &ctx.sibling_findings {
+                initial_msg.push_str(&format!("\n- {sf}"));
+            }
+        }
     }
 
     messages.push(ConversationMessage {
