@@ -306,10 +306,13 @@ fn collect_rust_files(root: &Path) -> Result<Vec<PathBuf>> {
         .filter_map(|e| e.ok())
     {
         let path = entry.path();
-        let path_str = path.to_string_lossy();
+        // Use path relative to repo root for exclusion checks, so that
+        // the repo's location on disk doesn't affect filtering.
+        let rel = path.strip_prefix(root).unwrap_or(path);
+        let rel_str = format!("/{}", rel.to_string_lossy());
         if path.extension().is_some_and(|ext| ext == "rs")
-            && !EXCLUDED_DIRS.iter().any(|d| path_str.contains(d))
-            && !EXCLUDED_SUFFIXES.iter().any(|s| path_str.ends_with(s))
+            && !EXCLUDED_DIRS.iter().any(|d| rel_str.contains(d))
+            && !EXCLUDED_SUFFIXES.iter().any(|s| rel_str.ends_with(s))
         {
             files.push(path.to_path_buf());
         }
