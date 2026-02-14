@@ -274,23 +274,23 @@ fn is_solana_project(root: &Path) -> bool {
         return true;
     }
     // Check root Cargo.toml
-    if let Ok(content) = std::fs::read_to_string(root.join("Cargo.toml")) {
-        if content.contains("solana-program") || content.contains("anchor-lang") {
-            return true;
-        }
+    if let Ok(content) = std::fs::read_to_string(root.join("Cargo.toml"))
+        && (content.contains("solana-program") || content.contains("anchor-lang"))
+    {
+        return true;
     }
     // Check common program directories one level deep
     for dir_name in ["programs", "program", "src"] {
         let dir = root.join(dir_name);
-        if dir.is_dir() {
-            if let Ok(entries) = std::fs::read_dir(&dir) {
-                for entry in entries.flatten() {
-                    let cargo = entry.path().join("Cargo.toml");
-                    if let Ok(content) = std::fs::read_to_string(&cargo) {
-                        if content.contains("solana-program") || content.contains("anchor-lang") {
-                            return true;
-                        }
-                    }
+        if dir.is_dir()
+            && let Ok(entries) = std::fs::read_dir(&dir)
+        {
+            for entry in entries.flatten() {
+                let cargo = entry.path().join("Cargo.toml");
+                if let Ok(content) = std::fs::read_to_string(&cargo)
+                    && (content.contains("solana-program") || content.contains("anchor-lang"))
+                {
+                    return true;
                 }
             }
         }

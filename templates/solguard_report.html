@@ -76,24 +76,32 @@
         <section>
             <h2 class="text-xl font-bold mb-4 text-gray-200">Methodology</h2>
             <p class="text-gray-500 text-sm mb-4">SolGuard's autonomous pipeline: narrative-driven target selection ensures we scan what matters, not random repos.</p>
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-sm text-gray-400">
-                <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+            <div class="flex flex-col md:flex-row items-stretch gap-0 text-sm text-gray-400">
+                <div class="flex-1 bg-gray-900 rounded-lg p-4 border border-gray-800">
                     <h4 class="text-gray-300 font-medium mb-2">1. Signal Collection</h4>
                     <p>Parallel collection from GitHub API (new Solana repos, star velocity), Solana RPC (TPS, program activity), blog scraping (Helius, Jito, Marinade), and DeFiLlama (TVL, protocol rankings).</p>
                 </div>
-                <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                <div class="hidden md:flex items-center px-1 text-solana-green text-xl font-bold select-none">&rarr;</div>
+                <div class="flex md:hidden justify-center py-1 text-solana-green text-xl font-bold select-none">&darr;</div>
+                <div class="flex-1 bg-gray-900 rounded-lg p-4 border border-gray-800">
                     <h4 class="text-gray-300 font-medium mb-2">2. Narrative Synthesis</h4>
                     <p>LLM identifies growth narratives from aggregated signals, assigning confidence scores and linking to active repositories.</p>
                 </div>
-                <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                <div class="hidden md:flex items-center px-1 text-solana-green text-xl font-bold select-none">&rarr;</div>
+                <div class="flex md:hidden justify-center py-1 text-solana-green text-xl font-bold select-none">&darr;</div>
+                <div class="flex-1 bg-gray-900 rounded-lg p-4 border border-gray-800">
                     <h4 class="text-gray-300 font-medium mb-2">3. Security Scanning</h4>
                     <p>Static analysis: 10 regex + 3 AST vulnerability patterns. Deep review: multi-turn LLM agent investigates trust boundaries, fund flows, and state transitions.</p>
                 </div>
-                <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                <div class="hidden md:flex items-center px-1 text-solana-green text-xl font-bold select-none">&rarr;</div>
+                <div class="flex md:hidden justify-center py-1 text-solana-green text-xl font-bold select-none">&darr;</div>
+                <div class="flex-1 bg-gray-900 rounded-lg p-4 border border-gray-800">
                     <h4 class="text-gray-300 font-medium mb-2">4. Adversarial Validation</h4>
                     <p>A separate LLM pass attempts to disprove each finding — reading cited code, checking mitigations, verifying attack reachability.</p>
                 </div>
-                <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                <div class="hidden md:flex items-center px-1 text-solana-green text-xl font-bold select-none">&rarr;</div>
+                <div class="flex md:hidden justify-center py-1 text-solana-green text-xl font-bold select-none">&darr;</div>
+                <div class="flex-1 bg-gray-900 rounded-lg p-4 border border-gray-800">
                     <h4 class="text-gray-300 font-medium mb-2">5. Cross-Reference</h4>
                     <p>Risk scoring: <code class="text-gray-300">severity_weight * validation_multiplier * narrative_confidence</code>. Findings linked to narratives for ecosystem context.</p>
                 </div>
