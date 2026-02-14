@@ -58,12 +58,12 @@ pub async fn run_narrative_pipeline(
     );
 
     let mut signals = Vec::new();
-    let mut repo_names = Vec::new();
+    let mut discovered_repos = Vec::new();
 
     match github_result {
         Ok(data) => {
             signals.extend(data.signals);
-            repo_names = data.discovered_repos;
+            discovered_repos = data.discovered_repos;
         }
         Err(e) => tracing::warn!(error = %e, "GitHub signal collection failed"),
     }
@@ -85,7 +85,7 @@ pub async fn run_narrative_pipeline(
 
     info!(
         signals = signals.len(),
-        repos = repo_names.len(),
+        repos = discovered_repos.len(),
         "signal collection complete"
     );
 
@@ -96,7 +96,7 @@ pub async fn run_narrative_pipeline(
 
     // Aggregate signals
     let groups = aggregator::aggregate(&signals);
-    let signals_json = aggregator::signals_to_json(&signals, &groups, &repo_names);
+    let signals_json = aggregator::signals_to_json(&signals, &groups, &discovered_repos);
 
     // Synthesize narratives via LLM
     let llm = LlmClient::from_config(

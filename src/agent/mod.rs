@@ -5,6 +5,7 @@ pub mod cross_ref;
 use crate::LlmOverride;
 use crate::config::Config;
 use crate::llm::{ModelRouter, TaskKind};
+use crate::memory::{RepoResult, RunHistory, RunMemory};
 use crate::narrative::{self, Narrative};
 use crate::output;
 use crate::security::{self, agent_review::ScanContext};
@@ -29,6 +30,19 @@ pub async fn run_full_pipeline(
 ) -> Result<()> {
     info!("SolGuard autonomous pipeline starting");
 
+    // Load run memory from previous runs
+    let run_memory = RunMemory::load_or_default();
+    if run_memory.total_runs > 0 {
+        info!(
+            runs = run_memory.total_runs,
+            blocklisted = run_memory.repo_blocklist.len(),
+            "Loaded memory from {} previous runs. Blocklisted {} repos.",
+            run_memory.total_runs,
+            run_memory.repo_blocklist.len()
+        );
+    }
+    let mut run_history = RunHistory::new();
+
     // Phase 1: Narrative detection
     info!("Phase 1: Detecting narratives...");
     let mut narratives =
@@ -37,11 +51,50 @@ pub async fn run_full_pipeline(
 
     // Phase 2: Target selection from narratives
     info!("Phase 2: Selecting scan targets...");
-    let targets: Vec<String> = narratives
+    let mut targets: Vec<String> = narratives
         .iter()
         .flat_map(|n| n.active_repos.iter().cloned())
         .collect();
-    info!(count = targets.len(), "scan targets identified");
+    targets.sort();
+    targets.dedup();
+
+    // Load config once for targets + agent_review
+    let cfg = Config::load(&config_path).unwrap_or_default();
+
+    // Inject known-good targets from config
+    if let Some(ref cfg_repos_dir) = cfg.targets.repos_dir {
+        let base = config_path
+            .parent()
+            .map(|p| p.join(cfg_repos_dir))
+            .unwrap_or_else(|| cfg_repos_dir.clone());
+        for name in &cfg.targets.always_scan {
+            if base.join(name).is_dir()
+                && !targets
+                    .iter()
+                    .any(|t| t.split('/').next_back() == Some(name))
+            {
+                targets.push(name.clone());
+            }
+        }
+    }
+    // Filter out blocklisted repos (consistently failing in previous runs)
+    let pre_filter = targets.len();
+    targets.retain(|t| {
+        let name = t.split('/').next_back().unwrap_or(t);
+        !run_memory.repo_blocklist.iter().any(|b| b == name)
+    });
+    if targets.len() < pre_filter {
+        info!(
+            removed = pre_filter - targets.len(),
+            "filtered blocklisted repos from memory"
+        );
+    }
+
+    run_history.signals_collected = narratives.len();
+    info!(
+        count = targets.len(),
+        "scan targets identified (deduped + known-good, blocklist filtered)"
+    );
 
     // Phase 3: Clone + scan + validate per-repo
     info!(
@@ -50,10 +103,16 @@ pub async fn run_full_pipeline(
     );
     std::fs::create_dir_all(&repos_dir)?;
 
+    // Resolve config repos_dir relative to config file for known-good target lookup
+    let known_good_base = cfg.targets.repos_dir.as_ref().map(|rd| {
+        config_path
+            .parent()
+            .map(|p| p.join(rd))
+            .unwrap_or_else(|| rd.clone())
+    });
+
     let default_agent_config = if deep {
-        Config::load(&config_path)
-            .map(|c| c.agent_review)
-            .unwrap_or_default()
+        cfg.agent_review
     } else {
         crate::config::AgentReviewConfig::default()
     };
@@ -61,9 +120,33 @@ pub async fn run_full_pipeline(
     let mut all_findings = Vec::new();
     for target in &targets {
         let repo_name = target.split('/').next_back().unwrap_or(target);
-        let repo_path = repos_dir.join(repo_name);
+
+        // Known-good targets (bare names) resolve from config repos_dir
+        let repo_path = if !target.contains('/') {
+            if let Some(ref base) = known_good_base {
+                let p = base.join(repo_name);
+                if p.is_dir() {
+                    p
+                } else {
+                    repos_dir.join(repo_name)
+                }
+            } else {
+                repos_dir.join(repo_name)
+            }
+        } else {
+            repos_dir.join(repo_name)
+        };
 
         if !repo_path.exists() {
+            if !target.contains('/') {
+                tracing::warn!(repo = %target, "known-good target not found locally, skipping");
+                run_history.repo_results.push(RepoResult {
+                    name: repo_name.to_string(),
+                    findings_count: 0,
+                    errors: vec!["not found locally".into()],
+                });
+                continue;
+            }
             info!(repo = %target, "cloning repository");
             let status = tokio::process::Command::new("git")
                 .args([
@@ -78,6 +161,11 @@ pub async fn run_full_pipeline(
 
             if !status.success() {
                 tracing::warn!(repo = %target, "failed to clone, skipping");
+                run_history.repo_results.push(RepoResult {
+                    name: repo_name.to_string(),
+                    findings_count: 0,
+                    errors: vec!["clone failed".into()],
+                });
                 continue;
             }
         }
@@ -145,6 +233,7 @@ pub async fn run_full_pipeline(
         match result {
             Ok(mut findings) => {
                 // Validate findings for this repo
+                let mut repo_errors = Vec::new();
                 if deep && !findings.is_empty() {
                     info!(repo = %target, count = findings.len(), "validating findings");
                     if let Err(e) = security::validator::validate_findings(
@@ -155,17 +244,29 @@ pub async fn run_full_pipeline(
                     )
                     .await
                     {
+                        repo_errors.push(format!("validation: {e}"));
                         tracing::warn!(
                             repo = %target, error = %e,
                             "validation failed, keeping unvalidated"
                         );
                     }
                 }
-                info!(repo = %target, findings = findings.len(), "scan complete");
+                let count = findings.len();
+                info!(repo = %target, findings = count, "scan complete");
                 all_findings.extend(findings);
+                run_history.repo_results.push(RepoResult {
+                    name: repo_name.to_string(),
+                    findings_count: count,
+                    errors: repo_errors,
+                });
             }
             Err(e) => {
                 tracing::warn!(repo = %target, error = %e, "scan failed");
+                run_history.repo_results.push(RepoResult {
+                    name: repo_name.to_string(),
+                    findings_count: 0,
+                    errors: vec![e.to_string()],
+                });
             }
         }
     }
@@ -183,7 +284,7 @@ pub async fn run_full_pipeline(
 
     // Phase 5: Generate combined report
     info!("Phase 5: Generating combined report...");
-    let html = output::render_combined_report(&narratives, &all_findings)?;
+    let html = output::render_combined_report(&narratives, &all_findings, Some(&run_memory))?;
 
     if let Some(parent) = output_path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -197,6 +298,17 @@ pub async fn run_full_pipeline(
         narratives.len(),
         all_findings.len()
     );
+
+    // Save run history and update memory for future runs
+    run_history.total_findings = all_findings.len();
+    if let Err(e) = run_history.save() {
+        tracing::warn!(error = %e, "failed to save run history");
+    }
+    let mut run_memory = run_memory;
+    run_memory.update_from_run(&run_history);
+    if let Err(e) = run_memory.save() {
+        tracing::warn!(error = %e, "failed to save run memory");
+    }
 
     Ok(())
 }

@@ -2,6 +2,10 @@
 
 Autonomous Solana ecosystem intelligence agent — combines narrative detection + security scanning.
 
+## IMPORTANT: Build/Test/Release Ownership
+
+**Morgan manually runs all builds, tests, and releases.** Claude writes code and stages changes only. Never run `cargo build`, `cargo test`, `cargo run`, `cargo clippy`, or any release command unless Morgan explicitly asks.
+
 ## Build & Test
 
 ```bash
@@ -49,7 +53,7 @@ ANTHROPIC_API_KEY=     # When using provider = "anthropic" in config.toml
 SOLANA_RPC_URL=        # Solana RPC endpoint (default: public mainnet)
 ```
 
-Shared .env at `~/Documents/.env` — loaded automatically.
+Shared .env at `~/Documents/superteam/.env` — loaded automatically.
 
 ## Architecture
 
@@ -78,9 +82,10 @@ This isn't "two tools side by side." The cross-functional insight is:
 
 ### Narrative Pipeline
 
-Signal collection from 3 sources (parallel):
+Signal collection from 4 sources (parallel):
 - `narrative/github.rs` — GitHub Search API: new Solana repos, star velocity, trending
 - `narrative/solana_rpc.rs` — Solana RPC: TPS, epoch info, program activity (paginated)
+- `narrative/defi_llama.rs` — DeFiLlama API: TVL, protocol metrics, chain activity
 - `narrative/social.rs` — Blog scraping: article extraction, Solana relevance filtering
 
 Analysis:
@@ -148,7 +153,7 @@ Analysis:
 
 Part of SuperTeam bounty sprint (Feb 11-15, 2026).
 Open Innovation track — judged on autonomy, originality, Solana usage, reproducibility.
-Durable state: `~/.claude/projects/-home-suds-Documents/memory/superteam-sprint.md`
+Durable state: `~/.claude/projects/-home-suds-Documents-superteam/memory/superteam-sprint.md`
 
 ## Doc-to-Code Mapping
 

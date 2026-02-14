@@ -1,6 +1,6 @@
 use crate::error::{Error, Result};
 use serde::Deserialize;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -15,6 +15,16 @@ pub struct Config {
     pub models: Option<ModelsConfig>,
     #[serde(default)]
     pub agent_review: AgentReviewConfig,
+    #[serde(default)]
+    pub targets: TargetsConfig,
+}
+
+#[derive(Debug, Deserialize, Default)]
+pub struct TargetsConfig {
+    #[serde(default)]
+    pub always_scan: Vec<String>,
+    #[serde(default)]
+    pub repos_dir: Option<PathBuf>,
 }
 
 /// Configuration for the multi-turn agent security review.
@@ -236,6 +246,7 @@ impl Default for Config {
             },
             models: None,
             agent_review: AgentReviewConfig::default(),
+            targets: TargetsConfig::default(),
         }
     }
 }

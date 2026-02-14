@@ -44,7 +44,7 @@ fn report_contains_narrative_titles() {
         "High",
     )];
     let findings = vec![];
-    let html = output::render_combined_report(&narratives, &findings).unwrap();
+    let html = output::render_combined_report(&narratives, &findings, None).unwrap();
     assert!(html.contains("DeFi Growth"));
 }
 
@@ -57,7 +57,7 @@ fn report_contains_finding_titles() {
         "repos/test/src/lib.rs",
         ValidationStatus::Unvalidated,
     )];
-    let html = output::render_combined_report(&narratives, &findings).unwrap();
+    let html = output::render_combined_report(&narratives, &findings, None).unwrap();
     assert!(html.contains("Missing Signer"));
 }
 
@@ -73,7 +73,7 @@ fn report_contains_validation_badges() {
         "repos/test/src/lib.rs",
         ValidationStatus::Confirmed,
     )];
-    let html = output::render_combined_report(&narratives, &findings).unwrap();
+    let html = output::render_combined_report(&narratives, &findings, None).unwrap();
     assert!(html.contains("Confirmed"));
 }
 
@@ -91,13 +91,13 @@ fn report_has_orphan_findings() {
         "repos/orphan-repo/src/lib.rs",
         ValidationStatus::Unvalidated,
     )];
-    let html = output::render_combined_report(&narratives, &findings).unwrap();
+    let html = output::render_combined_report(&narratives, &findings, None).unwrap();
     assert!(html.contains("Orphan Bug"));
 }
 
 #[test]
 fn empty_narratives_and_findings_produce_valid_html() {
-    let html = output::render_combined_report(&[], &[]).unwrap();
+    let html = output::render_combined_report(&[], &[], None).unwrap();
     assert!(
         html.contains("html") || html.contains("<!DOCTYPE") || html.contains("<html"),
         "should produce valid HTML"

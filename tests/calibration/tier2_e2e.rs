@@ -69,7 +69,7 @@ async fn full_pipeline_data_flow() {
     assert_eq!(narratives[0].risk_level, "Critical");
 
     // Phase 5: Report generation
-    let html = render_combined_report(&narratives, &findings).unwrap();
+    let html = render_combined_report(&narratives, &findings, None).unwrap();
 
     // Verify all data flows through to the report
     for gt in GROUND_TRUTH {

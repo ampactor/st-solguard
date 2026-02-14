@@ -120,9 +120,13 @@ enum Command {
         #[arg(long)]
         model: Option<String>,
 
-        /// Use multi-turn agent investigation instead of static-only scanning
-        #[arg(long)]
+        /// Use multi-turn agent investigation (enabled by default)
+        #[arg(long, default_value_t = true)]
         deep: bool,
+
+        /// Force static-only scanning (disables deep agent review)
+        #[arg(long)]
+        static_only: bool,
     },
 
     /// Run narrative detection only
@@ -264,10 +268,12 @@ async fn main() -> Result<()> {
             provider,
             model,
             deep,
+            static_only,
         } => {
             let llm_override = make_llm_override(provider, model);
             let cfg = config::Config::load(&config).unwrap_or_default();
             let router = build_model_router(&cfg, llm_override.as_ref())?;
+            let deep = deep && !static_only;
             agent::run_full_pipeline(config, output, repos_dir, llm_override, router, deep).await
         }
         Command::Narratives {
@@ -412,7 +418,7 @@ fn render_from_files(
     let findings: Vec<security::SecurityFinding> =
         serde_json::from_str(&std::fs::read_to_string(&findings_path)?)?;
 
-    let html = output::render_combined_report(&narratives, &findings)?;
+    let html = output::render_combined_report(&narratives, &findings, None)?;
     if let Some(parent) = output_path.parent() {
         std::fs::create_dir_all(parent)?;
     }

@@ -2,6 +2,8 @@
 
 **Autonomous agent that finds ecosystem landmines: growing Solana projects with critical security gaps.**
 
+Built on narrative intelligence from [SolScout](../st-narrative/) and scanning methodology from [SolScout Scanner](../st-audit/). SolGuard is the autonomous orchestrator that combines both into a narrative-informed security intelligence pipeline.
+
 ## What It Found
 
 SolGuard's narrative detection identified a Privacy trend on Solana — a new ZK shielded pool (`shielded-pool-pinocchio-solana`) built with raw Pinocchio, Groth16/Noir circuits, and explicitly marked "NOT AUDITED." The agent autonomously cloned the repo, scanned it, and triggered deep code review.
@@ -41,6 +43,27 @@ Five phases, fully autonomous after `cargo run`. Each phase's output drives the 
 3. **Target Selection** — cross-references narrative repos with audit status to find high-value, under-examined code
 4. **Security Scanning** — 13 static patterns (10 regex + 3 AST via `syn`) plus optional deep multi-turn LLM agent review with protocol-specific focus areas
 5. **Cross-Reference** — maps findings back to narratives with risk scoring. The report says "here are bugs in the protocols growing fastest"
+
+## Autonomy
+
+SolGuard is designed to run without human intervention. One command produces a complete intelligence report:
+
+```bash
+cargo run -- run -c config.toml -o report.html --deep
+```
+
+No human-curated target lists. No manual triage. No hand-picked repos. The agent:
+
+- **Discovers its own targets** — narrative synthesis identifies what's trending, target selection filters by audit status and risk signals
+- **Decides where to look** — protocol-specific focus areas are chosen by matching narrative context (DeFi → sandwich/oracle/LP patterns, Privacy → Merkle proof/nullifier patterns, etc.)
+- **Allocates its own budget** — `compute_budget()` dynamically scales investigation depth based on narrative confidence and repo count. High-confidence narratives get deeper scans
+- **Challenges its own findings** — adversarial validator reviews each finding with a skeptical prompt, dismissing false positives and downgrading disputed severity
+- **Handles failures gracefully** — API rate limits, unreachable blogs, repos with no Rust code, malformed LLM responses — the pipeline continues through all of them
+- **Cross-references autonomously** — maps findings back to narratives with deterministic risk scoring, producing a narrative-centric report that tells a story, not a list of bugs
+
+The vault-drain exploit chain (3 Critical findings composing a complete attack path) was discovered by the pipeline running exactly this command. A human pointed it at a config file. The agent did the rest.
+
+**134 tests** verify scanner accuracy, agent orchestration, report generation, and cross-reference logic. The pipeline is reproducible: same config → same signal sources → deterministic scoring.
 
 ## Why This Matters
 

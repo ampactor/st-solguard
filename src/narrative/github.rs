@@ -3,7 +3,7 @@ use crate::config::GitHubConfig;
 use crate::error::Result;
 use crate::http::HttpClient;
 use chrono::{DateTime, Utc};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tracing::info;
 
 const GITHUB_API: &str = "https://api.github.com";
@@ -31,9 +31,17 @@ struct RepoItem {
     watchers_count: u64,
 }
 
+#[derive(Clone, Serialize)]
+pub struct DiscoveredRepo {
+    pub name: String,
+    pub language: String,
+    pub stars: u64,
+    pub description: String,
+}
+
 pub struct GitHubData {
     pub signals: Vec<Signal>,
-    pub discovered_repos: Vec<String>,
+    pub discovered_repos: Vec<DiscoveredRepo>,
 }
 
 pub async fn collect(config: &GitHubConfig, http: &HttpClient) -> Result<GitHubData> {
@@ -53,9 +61,16 @@ pub async fn collect(config: &GitHubConfig, http: &HttpClient) -> Result<GitHubD
         info!(topic, "searching GitHub for new repos");
         let resp: SearchResponse = http.get_json_authed(&url, &config.token).await?;
 
-        // Collect repo full names for target selection
+        // Collect Rust repos for target selection
         for repo in &resp.items {
-            discovered_repos.push(repo.full_name.clone());
+            if repo.language.as_deref() == Some("Rust") {
+                discovered_repos.push(DiscoveredRepo {
+                    name: repo.full_name.clone(),
+                    language: "Rust".into(),
+                    stars: repo.stargazers_count,
+                    description: repo.description.clone().unwrap_or_default(),
+                });
+            }
         }
 
         signals.push(Signal {
@@ -134,8 +149,15 @@ pub async fn collect(config: &GitHubConfig, http: &HttpClient) -> Result<GitHubD
     let trending: SearchResponse = http.get_json_authed(&trending_url, &config.token).await?;
 
     for repo in &trending.items {
-        if !discovered_repos.contains(&repo.full_name) {
-            discovered_repos.push(repo.full_name.clone());
+        if repo.language.as_deref() == Some("Rust")
+            && !discovered_repos.iter().any(|r| r.name == repo.full_name)
+        {
+            discovered_repos.push(DiscoveredRepo {
+                name: repo.full_name.clone(),
+                language: "Rust".into(),
+                stars: repo.stargazers_count,
+                description: repo.description.clone().unwrap_or_default(),
+            });
         }
     }
 

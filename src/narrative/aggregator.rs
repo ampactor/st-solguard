@@ -1,3 +1,4 @@
+use super::github::DiscoveredRepo;
 use super::types::{Metric, Signal, SignalSource};
 use std::collections::HashMap;
 
@@ -10,13 +11,21 @@ pub struct SignalGroup {
     pub key_metrics: Vec<Metric>,
 }
 
+/// Normalize source-specific categories to canonical forms for grouping.
+fn normalize_category(raw: &str) -> String {
+    match raw {
+        "DeFi TVL" | "Dexes" | "DEX" | "Lending" | "Yield" | "Yield Aggregator" => "DeFi".into(),
+        "Liquid Staking" | "Staking" => "Staking".into(),
+        "NFT" | "NFT Marketplace" | "NFT Lending" => "NFT & Gaming".into(),
+        other => other.to_string(),
+    }
+}
+
 pub fn aggregate(signals: &[Signal]) -> Vec<SignalGroup> {
     let mut by_category: HashMap<String, Vec<usize>> = HashMap::new();
     for (i, signal) in signals.iter().enumerate() {
-        by_category
-            .entry(signal.category.clone())
-            .or_default()
-            .push(i);
+        let category = normalize_category(&signal.category);
+        by_category.entry(category).or_default().push(i);
     }
 
     let mut groups: Vec<SignalGroup> = by_category
@@ -61,7 +70,7 @@ pub fn aggregate(signals: &[Signal]) -> Vec<SignalGroup> {
 pub fn signals_to_json(
     signals: &[Signal],
     groups: &[SignalGroup],
-    discovered_repos: &[String],
+    discovered_repos: &[DiscoveredRepo],
 ) -> String {
     let summary: Vec<serde_json::Value> = groups
         .iter()

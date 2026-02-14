@@ -90,11 +90,15 @@ impl From<Finding> for SecurityFinding {
     }
 }
 
-/// Directories that contain test/client/build code, not on-chain programs.
+/// Directories and file patterns that contain test/client/build code, not on-chain programs.
 const EXCLUDED_DIRS: &[&str] = &[
     "/target/",
     "/tests/",
     "/test/",
+    "/main_tests/",
+    "/fixtures/",
+    "/mock/",
+    "/mocks/",
     "/client/",
     "/clients/",
     "/cli/",
@@ -108,12 +112,23 @@ const EXCLUDED_DIRS: &[&str] = &[
     "/generated/",
 ];
 
+/// File name suffixes that indicate test code.
+const EXCLUDED_SUFFIXES: &[&str] = &["_test.rs", "_tests.rs"];
+
 /// Scan a repository for vulnerabilities.
 pub async fn scan_repo(repo_path: &Path) -> Result<Vec<SecurityFinding>> {
     info!(path = %repo_path.display(), "security scan: starting");
 
     if !repo_path.exists() {
         anyhow::bail!("Repository path does not exist: {}", repo_path.display());
+    }
+
+    let solana_project = is_solana_project(repo_path);
+    if !solana_project {
+        tracing::warn!(
+            path = %repo_path.display(),
+            "no Anchor.toml or solana-program dependency found — findings tagged low-confidence"
+        );
     }
 
     let rust_files = collect_rust_files(repo_path)?;
@@ -130,14 +145,24 @@ pub async fn scan_repo(repo_path: &Path) -> Result<Vec<SecurityFinding>> {
         let content = std::fs::read_to_string(file_path)?;
 
         // Regex-based pattern scan
+        tracing::debug!(file = %file_path.display(), "regex scan starting");
         all_findings.extend(regex_scan::scan(&content, file_path));
+        tracing::debug!(file = %file_path.display(), "regex scan done");
 
         // AST-based scan
+        tracing::debug!(file = %file_path.display(), "AST scan starting");
         match ast_scan::scan(&content, file_path) {
             Ok(ast_findings) => all_findings.extend(ast_findings),
             Err(e) => {
                 tracing::warn!(file = %file_path.display(), error = %e, "AST parse failed, skipping");
             }
+        }
+    }
+
+    // Tag non-Solana repos as low-confidence
+    if !solana_project {
+        for f in &mut all_findings {
+            f.confidence = 0.2;
         }
     }
 
@@ -154,7 +179,13 @@ pub async fn scan_repo(repo_path: &Path) -> Result<Vec<SecurityFinding>> {
 
     let findings: Vec<SecurityFinding> = all_findings
         .into_iter()
-        .map(SecurityFinding::from)
+        .map(|f| {
+            let mut sf = SecurityFinding::from(f);
+            if !solana_project {
+                sf.title = format!("[Low Confidence] {}", sf.title);
+            }
+            sf
+        })
         .collect();
 
     info!(count = findings.len(), "security scan complete");
@@ -178,53 +209,93 @@ pub async fn scan_repo_deep(
         Some(agent_review::format_triage_context(&static_findings))
     };
 
-    let (agent_findings, stats) =
-        agent_review::investigate(llm, repo_path, config, triage.as_deref(), scan_context).await?;
+    let mut findings: Vec<SecurityFinding> = Vec::new();
 
-    info!(
-        agent_findings = agent_findings.len(),
-        static_findings = static_findings.len(),
-        turns = stats.turns,
-        cost = format!("${:.4}", stats.total_cost_usd),
-        "deep scan complete"
-    );
+    match agent_review::investigate(llm, repo_path, config, triage.as_deref(), scan_context).await {
+        Ok((agent_findings, stats)) => {
+            info!(
+                agent_findings = agent_findings.len(),
+                static_findings = static_findings.len(),
+                turns = stats.turns,
+                cost = format!("${:.4}", stats.total_cost_usd),
+                "deep scan complete"
+            );
 
-    // Convert agent findings to SecurityFinding
-    let mut findings: Vec<SecurityFinding> = agent_findings
-        .into_iter()
-        .map(|af| SecurityFinding {
-            title: af.title,
-            severity: af.severity,
-            description: af.description,
-            file_path: af
-                .affected_files
-                .first()
-                .map(PathBuf::from)
-                .unwrap_or_default(),
-            line_number: 0,
-            remediation: af.remediation,
-            validation_status: ValidationStatus::Unvalidated,
-            validation_reasoning: None,
-        })
-        .collect();
+            // Convert agent findings to SecurityFinding
+            findings.extend(agent_findings.into_iter().map(|af| {
+                SecurityFinding {
+                    title: af.title,
+                    severity: af.severity,
+                    description: af.description,
+                    file_path: af
+                        .affected_files
+                        .first()
+                        .map(PathBuf::from)
+                        .unwrap_or_default(),
+                    line_number: 0,
+                    remediation: af.remediation,
+                    validation_status: ValidationStatus::Unvalidated,
+                    validation_reasoning: None,
+                }
+            }));
 
-    // Include high-confidence static findings not covered by agent
-    for sf in static_findings {
-        if sf.severity == "Critical" || sf.severity == "High" {
-            let dominated = findings.iter().any(|af| {
-                af.title.to_lowercase().contains(&sf.title.to_lowercase())
-                    || sf
-                        .file_path
-                        .to_string_lossy()
-                        .contains(&af.file_path.to_string_lossy().to_string())
-            });
-            if !dominated {
-                findings.push(sf);
+            // Include high-confidence static findings not covered by agent
+            for sf in static_findings {
+                if sf.severity == "Critical" || sf.severity == "High" {
+                    let dominated = findings.iter().any(|af| {
+                        af.title.to_lowercase().contains(&sf.title.to_lowercase())
+                            || sf
+                                .file_path
+                                .to_string_lossy()
+                                .contains(&af.file_path.to_string_lossy().to_string())
+                    });
+                    if !dominated {
+                        findings.push(sf);
+                    }
+                }
             }
+        }
+        Err(e) => {
+            tracing::warn!(error = %e, "deep agent review failed, falling back to static findings");
+            // Preserve ALL static findings when LLM fails — don't lose them
+            findings.extend(static_findings);
         }
     }
 
     Ok(findings)
+}
+
+/// Check whether a repository looks like a Solana program project.
+///
+/// Returns true if Anchor.toml exists at root, or any Cargo.toml in the tree
+/// declares `solana-program` or `anchor-lang` as a dependency.
+fn is_solana_project(root: &Path) -> bool {
+    if root.join("Anchor.toml").exists() {
+        return true;
+    }
+    // Check root Cargo.toml
+    if let Ok(content) = std::fs::read_to_string(root.join("Cargo.toml")) {
+        if content.contains("solana-program") || content.contains("anchor-lang") {
+            return true;
+        }
+    }
+    // Check common program directories one level deep
+    for dir_name in ["programs", "program", "src"] {
+        let dir = root.join(dir_name);
+        if dir.is_dir() {
+            if let Ok(entries) = std::fs::read_dir(&dir) {
+                for entry in entries.flatten() {
+                    let cargo = entry.path().join("Cargo.toml");
+                    if let Ok(content) = std::fs::read_to_string(&cargo) {
+                        if content.contains("solana-program") || content.contains("anchor-lang") {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
 }
 
 fn collect_rust_files(root: &Path) -> Result<Vec<PathBuf>> {
@@ -238,6 +309,7 @@ fn collect_rust_files(root: &Path) -> Result<Vec<PathBuf>> {
         let path_str = path.to_string_lossy();
         if path.extension().is_some_and(|ext| ext == "rs")
             && !EXCLUDED_DIRS.iter().any(|d| path_str.contains(d))
+            && !EXCLUDED_SUFFIXES.iter().any(|s| path_str.ends_with(s))
         {
             files.push(path.to_path_buf());
         }

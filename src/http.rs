@@ -22,7 +22,7 @@ impl HttpClient {
 
         Ok(Self {
             client,
-            max_retries: 3,
+            max_retries: 5,
             base_delay_ms: 1000,
         })
     }
@@ -84,7 +84,23 @@ impl HttpClient {
             }
 
             match build().send().await {
-                Ok(resp) => return self.handle_response(resp).await,
+                Ok(resp) => match self.handle_response(resp).await {
+                    Err(Error::RateLimit {
+                        retry_after_secs,
+                        ref platform,
+                    }) => {
+                        let wait = retry_after_secs.unwrap_or(delay / 1000).max(1);
+                        warn!(attempt, wait_secs = wait, platform = %platform, "rate limited, backing off");
+                        sleep(Duration::from_secs(wait)).await;
+                        delay = (delay * 2).min(60_000);
+                        last_error = Error::RateLimit {
+                            platform: platform.clone(),
+                            retry_after_secs,
+                        };
+                        continue;
+                    }
+                    other => return other,
+                },
                 Err(e) => {
                     last_error = Error::http(e.to_string());
                     if e.is_timeout() || e.is_connect() {

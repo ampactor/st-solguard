@@ -252,7 +252,14 @@ impl LlmClient {
         base_url: Option<String>,
     ) -> Result<Self> {
         let env_var = api_key_env.unwrap_or_else(|| provider.default_api_key_env().into());
-        let api_key = std::env::var(&env_var).unwrap_or_default();
+        let api_key = std::env::var(&env_var).map_err(|_| {
+            Error::config(format!(
+                "API key not found: set ${env_var} or provide api_key_env in config"
+            ))
+        })?;
+        if api_key.is_empty() {
+            return Err(Error::config(format!("${env_var} is set but empty")));
+        }
         Self::new(provider, api_key, model, max_tokens, base_url)
     }
 
