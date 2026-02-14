@@ -80,7 +80,7 @@ pub async fn validate(
     let mut turns: u32 = 0;
     let mut total_cost_usd: f64 = 0.0;
     // Validator gets 30% of investigator budget, capped at 5 turns
-    let max_turns = (config.max_turns * 30 / 100).max(2).min(5);
+    let max_turns = (config.max_turns * 30 / 100).clamp(2, 5);
 
     // Build initial user message with indexed findings.
     let indexed_findings: String = findings
@@ -289,7 +289,7 @@ pub async fn validate_findings(
     let mut turns: u32 = 0;
     let mut total_cost_usd: f64 = 0.0;
     // Validator gets 30% of investigator budget, capped at 5 turns
-    let max_turns = (config.max_turns * 30 / 100).max(2).min(5);
+    let max_turns = (config.max_turns * 30 / 100).clamp(2, 5);
 
     // Build initial user message with indexed findings.
     let indexed_findings: String = findings

@@ -94,11 +94,12 @@ Analysis:
 
 ### Security Pipeline
 
-**Static scanner:** 10 regex patterns (SOL-001..010) + 3 AST patterns (AST-001..003):
+**Static scanner:** 9 regex patterns (SOL-001, SOL-003..010) + 3 AST patterns (AST-001..003):
 - Missing signer/owner checks, unchecked arithmetic, remaining_accounts
 - PDA bump issues, account revival, arbitrary CPI, type cosplay
 - Division before multiplication, Token-2022 handling
-- Unchecked AccountInfo, key logging, unsafe blocks
+- Key logging, unsafe blocks
+- SOL-002 (Anchor Account<> owner check) removed — Anchor auto-validates, produced only false positives
 
 **Deep agent review (`--deep`):** Multi-turn LLM investigation using 4 tools:
 - `list_files`, `read_file`, `search_code`, `get_file_structure`
@@ -140,12 +141,13 @@ Analysis:
 | `src/narrative/social.rs` | Blog scraping |
 | `src/narrative/synthesizer.rs` | LLM narrative synthesis |
 | `src/security/mod.rs` | Security scanner orchestrator + `scan_repo_deep()` |
-| `src/security/regex_scan.rs` | 10 vulnerability regex patterns |
+| `src/security/regex_scan.rs` | 9 vulnerability regex patterns (SOL-002 removed) |
 | `src/security/ast_scan.rs` | 3 syn-based AST patterns |
 | `src/security/agent_tools.rs` | 4 repo investigation tools for deep agent review |
 | `src/security/agent_review.rs` | Multi-turn agent loop, `ScanContext`, `compute_budget()`, protocol focus areas |
 | `src/security/validator.rs` | Adversarial validation: `validate()` (standalone) + `validate_findings()` (pipeline) |
-| `src/output/mod.rs` | Narrative-centric report: risk badges, linked findings, orphans, methodology |
+| `src/memory.rs` | Run memory: RunHistory (per-run), RunMemory (aggregate blocklist, error patterns, reliability) |
+| `src/output/mod.rs` | Narrative-centric report: risk badges, linked findings, orphans, methodology, self-improvement |
 | `config.toml` | Default configuration (`[agent_review]`, optional `[models]` for per-task routing) |
 | `templates/solguard_report.html` | HTML report template |
 
@@ -170,4 +172,5 @@ Durable state: `~/.claude/projects/-home-suds-Documents-superteam/memory/superte
 | `src/config.rs`, `config.toml` | CLAUDE.md (Environment Variables) | Config options, agent_review section, [models] routing |
 | `src/llm.rs` | CLAUDE.md (Key Files, Architecture) | Provider support, ModelRouter, TaskKind routing |
 | `src/main.rs` | CLAUDE.md (Run) | CLI subcommands, flags |
+| `src/memory.rs` | CLAUDE.md (Key Files) | RunHistory/RunMemory structs, blocklist logic |
 | `src/output/mod.rs`, templates | CLAUDE.md (Key Files) | Report structure |

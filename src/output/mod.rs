@@ -224,11 +224,23 @@ pub fn render_combined_report(
             } else {
                 &n.risk_level
             };
+            let repos_display = if n.active_repos.is_empty() {
+                "none yet".to_string()
+            } else if n.active_repos.len() <= 3 {
+                n.active_repos.join(", ")
+            } else {
+                format!(
+                    "{} + {} more",
+                    n.active_repos[..3].join(", "),
+                    n.active_repos.len() - 3
+                )
+            };
             let repo_context = format!(
-                "Scanned because: {} narrative ({}), {} active repos tracked",
+                "Repos selected from \"{}\" narrative ({}% confidence, {} trend): {}",
                 n.title,
+                (n.confidence * 100.0) as u32,
                 n.trend,
-                n.active_repos.len()
+                repos_display,
             );
             NarrativeView {
                 title: n.title.clone(),

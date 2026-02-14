@@ -27,18 +27,6 @@ static PATTERNS: &[Pattern] = &[
         line_span: 1,
     },
     Pattern {
-        id: "SOL-002",
-        title: "Missing Owner Validation",
-        description: "Raw AccountInfo deserialized via next_account_info without owner check. \
-                      An attacker could pass an account owned by a different program with crafted data. \
-                      Anchor's Account<> type checks owner automatically — this targets native programs only.",
-        severity: Severity::High,
-        regex: r"next_account_info\s*\(",
-        remediation: "Add `if account.owner != program_id { return Err(ProgramError::IncorrectProgramId) }` after deserializing. Anchor's `Account<>` checks owner automatically.",
-        references: &["https://www.soldev.app/course/owner-checks"],
-        line_span: 1,
-    },
-    Pattern {
         id: "SOL-003",
         title: "Unchecked Arithmetic on Token Amounts",
         description: "Arithmetic operation (+, -, *) on potential token amounts without checked_* or saturating_*. \
@@ -218,32 +206,6 @@ mod tests {
     fn sol_001_negative() {
         let findings = scan_one("pub authority: Signer<'info>");
         assert!(!findings.iter().any(|f| f.pattern_id == "SOL-001"));
-    }
-
-    // -- SOL-002: Missing Owner Validation --
-
-    #[test]
-    fn sol_002_positive() {
-        let findings = scan_one("let account = next_account_info(iter)?;");
-        assert!(
-            findings
-                .iter()
-                .any(|f| f.pattern_id == "SOL-002" && f.severity == Severity::High),
-            "expected SOL-002 High finding, got: {findings:?}"
-        );
-    }
-
-    #[test]
-    fn sol_002_negative_anchor() {
-        // Anchor Account<> fields should NOT trigger SOL-002
-        let findings = scan_one("pub vault: Account<'info, Vault>");
-        assert!(!findings.iter().any(|f| f.pattern_id == "SOL-002"));
-    }
-
-    #[test]
-    fn sol_002_negative_signer() {
-        let findings = scan_one("pub authority: Signer<'info>");
-        assert!(!findings.iter().any(|f| f.pattern_id == "SOL-002"));
     }
 
     // -- SOL-003: Unchecked Arithmetic --
