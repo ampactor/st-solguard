@@ -43,7 +43,7 @@ fn gt_findings_confirmed() -> Vec<SecurityFinding> {
 fn report_contains_all_ground_truth() {
     let findings = gt_findings_confirmed();
     let narratives = vec![make_narrative_with_findings(findings.len())];
-    let html = render_combined_report(&narratives, &findings).unwrap();
+    let html = render_combined_report(&narratives, &findings, None).unwrap();
 
     // Every ground truth title should appear in the report
     for gt in GROUND_TRUTH {
@@ -77,7 +77,7 @@ fn report_contains_all_ground_truth() {
 fn report_severity_counts() {
     let findings = gt_findings_confirmed();
     let narratives = vec![make_narrative_with_findings(findings.len())];
-    let html = render_combined_report(&narratives, &findings).unwrap();
+    let html = render_combined_report(&narratives, &findings, None).unwrap();
 
     // Count severity occurrences by checking for severity-class patterns
     // The report uses text-red-500 for Critical, text-orange-400 for High, text-yellow-400 for Medium

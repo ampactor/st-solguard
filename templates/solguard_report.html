@@ -72,7 +72,63 @@
         </div>
         {% endif %}
 
-        <!-- Narratives with linked findings -->
+        <!-- Methodology (visible, not hidden in <details>) -->
+        <section>
+            <h2 class="text-xl font-bold mb-4 text-gray-200">Methodology</h2>
+            <p class="text-gray-500 text-sm mb-4">SolGuard's autonomous pipeline: narrative-driven target selection ensures we scan what matters, not random repos.</p>
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-3 text-sm text-gray-400">
+                <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                    <h4 class="text-gray-300 font-medium mb-2">1. Signal Collection</h4>
+                    <p>Parallel collection from GitHub API (new Solana repos, star velocity), Solana RPC (TPS, program activity), blog scraping (Helius, Jito, Marinade), and DeFiLlama (TVL, protocol rankings).</p>
+                </div>
+                <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                    <h4 class="text-gray-300 font-medium mb-2">2. Narrative Synthesis</h4>
+                    <p>LLM identifies growth narratives from aggregated signals, assigning confidence scores and linking to active repositories.</p>
+                </div>
+                <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                    <h4 class="text-gray-300 font-medium mb-2">3. Security Scanning</h4>
+                    <p>Static analysis: 10 regex + 3 AST vulnerability patterns. Deep review: multi-turn LLM agent investigates trust boundaries, fund flows, and state transitions.</p>
+                </div>
+                <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                    <h4 class="text-gray-300 font-medium mb-2">4. Adversarial Validation</h4>
+                    <p>A separate LLM pass attempts to disprove each finding — reading cited code, checking mitigations, verifying attack reachability.</p>
+                </div>
+                <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
+                    <h4 class="text-gray-300 font-medium mb-2">5. Cross-Reference</h4>
+                    <p>Risk scoring: <code class="text-gray-300">severity_weight * validation_multiplier * narrative_confidence</code>. Findings linked to narratives for ecosystem context.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Self-Improvement -->
+        <section>
+            <h2 class="text-xl font-bold mb-4 text-gray-200">Self-Improvement</h2>
+            {% if learning_total_runs > 0 %}
+            <div class="bg-purple-900/20 border border-purple-800/50 rounded-lg p-4">
+                <h3 class="text-purple-400 font-semibold mb-3">SolGuard has learned from {{ learning_total_runs }} previous run{% if learning_total_runs != 1 %}s{% endif %}</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-gray-200">{{ learning_repos_blocklisted }}</p>
+                        <p class="text-gray-500 text-xs">Repos Blocklisted</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-gray-200">{{ learning_errors_learned }}</p>
+                        <p class="text-gray-500 text-xs">Error Patterns Learned</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-2xl font-bold text-gray-200">{{ learning_total_runs }}</p>
+                        <p class="text-gray-500 text-xs">Total Runs</p>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-gray-900 border border-gray-800 rounded-lg p-4">
+                <p class="text-gray-400 text-sm">First run — SolGuard will learn from this execution and improve in subsequent runs.</p>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- Narratives with grouped findings -->
         <section>
             <h2 class="text-xl font-bold mb-6 text-gray-200">Narrative Risk Analysis</h2>
             {% if narratives.is_empty() %}
@@ -93,6 +149,7 @@
                             </div>
                         </div>
                         <p class="text-gray-400 text-sm mt-2">{{ n.summary }}</p>
+                        <p class="text-gray-500 text-xs mt-1 italic">{{ n.repo_context }}</p>
                         <div class="mt-2 flex gap-2">
                             <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.trend }}</span>
                             <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.repo_count }} repos</span>
@@ -104,32 +161,36 @@
                         </div>
                     </div>
 
-                    <!-- Linked findings -->
-                    {% if !n.linked_findings.is_empty() %}
+                    <!-- Grouped findings -->
+                    {% if !n.grouped_findings.is_empty() %}
                     <div class="border-t border-gray-800 bg-gray-950/50 px-5 py-3">
                         <p class="text-xs text-gray-500 mb-3 uppercase tracking-wider">Linked Vulnerabilities</p>
                         <div class="space-y-3">
-                            {% for f in n.linked_findings %}
+                            {% for g in n.grouped_findings %}
                             <div class="bg-gray-900/50 rounded p-3 border border-gray-800/50">
                                 <div class="flex items-start justify-between">
-                                    <span class="text-sm text-gray-200 font-medium">{{ f.title }}</span>
+                                    <span class="text-sm text-gray-200 font-medium">{{ g.title }}</span>
                                     <div class="flex items-center gap-1.5">
-                                        <span class="text-xs {{ f.validation_class }} px-1.5 py-0.5 rounded">{{ f.validation_badge }}</span>
-                                        <span class="text-xs font-medium {{ f.severity_class }}">{{ f.severity }}</span>
+                                        {% if g.count > 1 %}
+                                        <span class="text-xs bg-gray-800 text-gray-300 px-1.5 py-0.5 rounded">{{ g.count }} instances</span>
+                                        {% endif %}
+                                        <span class="text-xs {{ g.example.validation_class }} px-1.5 py-0.5 rounded">{{ g.example.validation_badge }}</span>
+                                        <span class="text-xs font-medium {{ g.severity_class }}">{{ g.severity }}</span>
                                     </div>
                                 </div>
-                                <p class="text-gray-500 text-xs mt-1">{{ f.description }}</p>
+                                <p class="text-gray-500 text-xs mt-1">{{ g.example.description }}</p>
                                 <div class="mt-1.5 flex flex-wrap gap-3 text-xs">
-                                    <span class="text-gray-500"><span class="text-gray-600">Fix:</span> {{ f.remediation }}</span>
+                                    <span class="text-gray-500"><span class="text-gray-600">Fix:</span> {{ g.example.remediation }}</span>
                                 </div>
                                 <div class="mt-1 flex items-center gap-3 text-xs text-gray-600">
-                                    <span>{{ f.repo }}</span>
-                                    <span>{{ f.file_location }}</span>
+                                    <span>{{ g.repo }}</span>
+                                    <span>{{ g.example.file_location }}</span>
                                 </div>
-                                {% if !f.validation_reasoning.is_empty() %}
+                                <div class="mt-1 text-xs text-gray-600 italic">{{ g.example.provenance }}</div>
+                                {% if !g.example.validation_reasoning.is_empty() %}
                                 <details class="mt-1">
                                     <summary class="text-xs text-gray-600 hover:text-gray-500">Validation reasoning</summary>
-                                    <p class="text-xs text-gray-500 mt-1">{{ f.validation_reasoning }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">{{ g.example.validation_reasoning }}</p>
                                 </details>
                                 {% endif %}
                             </div>
@@ -202,8 +263,8 @@
             {% endif %}
         </section>
 
-        <!-- Orphan Findings -->
-        {% if !orphan_findings.is_empty() %}
+        <!-- Orphan Findings (grouped) -->
+        {% if !orphan_groups.is_empty() %}
         <section>
             <details>
                 <summary class="text-xl font-bold mb-6 text-gray-200 flex items-center gap-2">
@@ -212,55 +273,30 @@
                 </summary>
                 <p class="text-gray-500 text-sm mb-4">Findings not associated with any detected narrative.</p>
                 <div class="space-y-3 mt-4">
-                    {% for f in orphan_findings %}
+                    {% for g in orphan_groups %}
                     <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-800/50">
                         <div class="flex items-start justify-between">
-                            <span class="text-sm text-gray-200">{{ f.title }}</span>
+                            <span class="text-sm text-gray-200">{{ g.title }}</span>
                             <div class="flex items-center gap-1.5">
-                                <span class="text-xs {{ f.validation_class }} px-1.5 py-0.5 rounded">{{ f.validation_badge }}</span>
-                                <span class="text-xs {{ f.severity_class }}">{{ f.severity }}</span>
+                                {% if g.count > 1 %}
+                                <span class="text-xs bg-gray-800 text-gray-300 px-1.5 py-0.5 rounded">{{ g.count }} instances</span>
+                                {% endif %}
+                                <span class="text-xs {{ g.example.validation_class }} px-1.5 py-0.5 rounded">{{ g.example.validation_badge }}</span>
+                                <span class="text-xs {{ g.severity_class }}">{{ g.severity }}</span>
                             </div>
                         </div>
-                        <p class="text-gray-500 text-xs mt-1">{{ f.description }}</p>
+                        <p class="text-gray-500 text-xs mt-1">{{ g.example.description }}</p>
                         <div class="mt-1 flex items-center gap-3 text-xs text-gray-600">
-                            <span>{{ f.repo }}</span>
-                            <span>{{ f.file_location }}</span>
+                            <span>{{ g.repo }}</span>
+                            <span>{{ g.example.file_location }}</span>
                         </div>
+                        <div class="mt-1 text-xs text-gray-600 italic">{{ g.example.provenance }}</div>
                     </div>
                     {% endfor %}
                 </div>
             </details>
         </section>
         {% endif %}
-
-        <!-- Methodology -->
-        <section>
-            <details>
-                <summary class="text-xl font-bold text-gray-200">Methodology</summary>
-                <div class="mt-4 text-sm text-gray-400 space-y-3">
-                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                        <h4 class="text-gray-300 font-medium mb-2">Signal Collection</h4>
-                        <p>Parallel collection from GitHub API (new Solana repos, star velocity), Solana RPC (TPS, program activity), blog scraping (Helius, Jito, Marinade), and DeFiLlama (TVL, protocol rankings). Signals aggregated by category with cross-source validation.</p>
-                    </div>
-                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                        <h4 class="text-gray-300 font-medium mb-2">Narrative Synthesis</h4>
-                        <p>LLM identifies growth narratives from aggregated signals, assigning confidence scores and linking to active repositories. Narrative confidence drives scan budget allocation.</p>
-                    </div>
-                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                        <h4 class="text-gray-300 font-medium mb-2">Security Scanning</h4>
-                        <p>Static analysis: 10 regex + 3 AST vulnerability patterns (SOL-001..010, AST-001..003). Deep review: multi-turn LLM agent investigates trust boundaries, fund flows, and state transitions with protocol-specific focus areas informed by the narrative context.</p>
-                    </div>
-                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                        <h4 class="text-gray-300 font-medium mb-2">Adversarial Validation</h4>
-                        <p>A separate LLM pass attempts to disprove each finding — reading cited code paths, checking for mitigations, and verifying attack reachability. Findings are classified as Confirmed, Disputed (severity downgraded), or Dismissed (removed).</p>
-                    </div>
-                    <div class="bg-gray-900 rounded-lg p-4 border border-gray-800">
-                        <h4 class="text-gray-300 font-medium mb-2">Cross-Reference & Risk Scoring</h4>
-                        <p>Deterministic risk scoring per narrative: <code class="text-gray-300">risk = sum(severity_weight * validation_multiplier * narrative_confidence)</code>. Severity weights: Critical=10, High=5, Medium=2, Low=0.5. Validation multipliers: Confirmed=1.0, Disputed=0.5, Unvalidated=0.7.</p>
-                    </div>
-                </div>
-            </details>
-        </section>
     </main>
 
     <footer class="border-t border-gray-800 px-6 py-4 mt-12">

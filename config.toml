@@ -3,7 +3,7 @@
 topics = ["solana"]
 min_stars = 3
 lookback_days = 30
-max_repos = 30
+max_repos = 15
 
 [solana]
 # rpc_url comes from SOLANA_RPC_URL env var
@@ -51,13 +51,13 @@ url = "https://solana.com/news"
 source_type = "blog"
 
 [[social.sources]]
-name = "Jito Blog"
-url = "https://www.jito.network/blog/"
+name = "Phantom Blog"
+url = "https://phantom.app/blog"
 source_type = "blog"
 
 [[social.sources]]
-name = "Marinade Blog"
-url = "https://blog.marinade.finance/"
+name = "Drift Protocol Blog"
+url = "https://drift.trade/blog"
 source_type = "blog"
 
 [defi_llama]
@@ -65,24 +65,23 @@ enabled = true
 top_protocols = 10
 
 [llm]
-provider = "openrouter"
-model = "arcee-ai/trinity-large-preview:free"
+provider = "groq"
+model = "llama-3.3-70b-versatile"
 max_tokens = 4096
 
-# For premium runs (submission quality):
-# provider = "anthropic"
-# model = "claude-opus-4-6"
-# api_key_env = "ANTHROPIC_API_KEY"
+[models]
+investigation = { provider = "openrouter", model = "qwen/qwen3-coder:free" }
+validation = { provider = "openrouter", model = "qwen/qwen3-coder:free" }
+cross_reference = { provider = "groq", model = "llama-3.1-8b-instant" }
 
-# Per-task model routing (optional — falls back to [llm] if absent).
-# CLI --model override applies uniformly across all tasks.
-# [models]
-# narrative = { provider = "groq", model = "qwen/qwen3-32b" }
-# investigation = { provider = "openrouter", model = "deepseek/deepseek-chat-v3-0324:free" }
-# validation = { provider = "groq", model = "qwen/qwen3-32b" }
-# cross_reference = { provider = "groq", model = "qwen/qwen3-32b" }
+[targets]
+repos_dir = "../st-audit/repos"
+always_scan = [
+    "raydium-cp-swap", "jito-programs", "mpl-token-metadata",
+    "tensor-marketplace", "switchboard", "shielded-pool-pinocchio-solana",
+]
 
 [agent_review]
-max_turns = 30
-max_tokens = 8192
-cost_limit_usd = 20.0
+max_turns = 15
+max_tokens = 4096
+cost_limit_usd = 5.0

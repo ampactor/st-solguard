@@ -1,3 +1,4 @@
+use crate::memory::RunMemory;
 use crate::narrative::Narrative;
 use crate::security::{SecurityFinding, ValidationStatus};
 use askama::Template;
@@ -22,8 +23,11 @@ struct SolGuardReport {
     has_validation: bool,
     narratives: Vec<NarrativeView>,
     repo_summaries: Vec<RepoSummary>,
-    orphan_findings: Vec<FindingView>,
+    orphan_groups: Vec<GroupedFinding>,
     orphan_count: usize,
+    learning_total_runs: u32,
+    learning_repos_blocklisted: usize,
+    learning_errors_learned: usize,
 }
 
 #[allow(dead_code)] // fields used by Askama template
@@ -37,7 +41,8 @@ struct NarrativeView {
     risk_score_fmt: String,
     risk_level: String,
     risk_class: String,
-    linked_findings: Vec<FindingView>,
+    grouped_findings: Vec<GroupedFinding>,
+    repo_context: String,
 }
 
 #[allow(dead_code)] // fields used by Askama template
@@ -52,6 +57,17 @@ struct FindingView {
     validation_badge: String,
     validation_class: String,
     validation_reasoning: String,
+    provenance: String,
+}
+
+#[allow(dead_code)] // fields used by Askama template
+struct GroupedFinding {
+    title: String,
+    severity: String,
+    severity_class: String,
+    repo: String,
+    count: usize,
+    example: FindingView,
 }
 
 #[allow(dead_code)] // fields used by Askama template
@@ -125,7 +141,7 @@ fn repo_name(f: &SecurityFinding) -> String {
         .unwrap_or_else(|| "unknown".into())
 }
 
-fn finding_to_view(f: &SecurityFinding) -> FindingView {
+fn finding_to_view(f: &SecurityFinding, provenance: String) -> FindingView {
     FindingView {
         title: f.title.clone(),
         severity_class: severity_class(&f.severity),
@@ -137,12 +153,43 @@ fn finding_to_view(f: &SecurityFinding) -> FindingView {
         validation_class: validation_class(&f.validation_status),
         validation_reasoning: f.validation_reasoning.clone().unwrap_or_default(),
         severity: f.severity.clone(),
+        provenance,
     }
+}
+
+fn group_findings(findings: Vec<FindingView>) -> Vec<GroupedFinding> {
+    let mut map: BTreeMap<(String, String), Vec<FindingView>> = BTreeMap::new();
+    for f in findings {
+        map.entry((f.title.clone(), f.repo.clone()))
+            .or_default()
+            .push(f);
+    }
+    let mut groups: Vec<GroupedFinding> = map
+        .into_iter()
+        .map(|((title, repo), mut members)| {
+            members.sort_by(|a, b| severity_order(&a.severity).cmp(&severity_order(&b.severity)));
+            let count = members.len();
+            let severity = members[0].severity.clone();
+            let severity_class = members[0].severity_class.clone();
+            let example = members.into_iter().next().unwrap();
+            GroupedFinding {
+                title,
+                severity,
+                severity_class,
+                repo,
+                count,
+                example,
+            }
+        })
+        .collect();
+    groups.sort_by(|a, b| severity_order(&a.severity).cmp(&severity_order(&b.severity)));
+    groups
 }
 
 pub fn render_combined_report(
     narratives: &[Narrative],
     findings: &[SecurityFinding],
+    run_memory: Option<&RunMemory>,
 ) -> anyhow::Result<String> {
     // Build narrative views with linked findings
     let mut linked_finding_indices: BTreeSet<usize> = BTreeSet::new();
@@ -154,19 +201,35 @@ pub fn render_combined_report(
             for (_, indices) in &n.repo_findings {
                 for &idx in indices {
                     if let Some(f) = findings.get(idx) {
-                        linked.push(finding_to_view(f));
+                        let scan_type = if f.line_number == 0 {
+                            "deep agent review"
+                        } else {
+                            "static scan"
+                        };
+                        let provenance = format!(
+                            "Source: {} ({}%) \u{2192} target selection \u{2192} {} \u{2192} {}",
+                            n.title,
+                            (n.confidence * 100.0) as u32,
+                            scan_type,
+                            validation_badge(&f.validation_status),
+                        );
+                        linked.push(finding_to_view(f, provenance));
                         linked_finding_indices.insert(idx);
                     }
                 }
             }
-            // Sort linked findings by severity
-            linked.sort_by(|a, b| severity_order(&a.severity).cmp(&severity_order(&b.severity)));
 
             let rl = if n.risk_level.is_empty() {
                 "None"
             } else {
                 &n.risk_level
             };
+            let repo_context = format!(
+                "Scanned because: {} narrative ({}), {} active repos tracked",
+                n.title,
+                n.trend,
+                n.active_repos.len()
+            );
             NarrativeView {
                 title: n.title.clone(),
                 summary: n.summary.clone(),
@@ -177,20 +240,33 @@ pub fn render_combined_report(
                 risk_score_fmt: format!("{:.1}", n.risk_score),
                 risk_level: rl.to_string(),
                 risk_class: risk_class(rl),
-                linked_findings: linked,
+                grouped_findings: group_findings(linked),
+                repo_context,
             }
         })
         .collect();
 
     // Orphan findings: not linked to any narrative
-    let mut orphan_findings: Vec<FindingView> = findings
+    let orphan_views: Vec<FindingView> = findings
         .iter()
         .enumerate()
         .filter(|(i, _)| !linked_finding_indices.contains(i))
-        .map(|(_, f)| finding_to_view(f))
+        .map(|(_, f)| {
+            let scan_type = if f.line_number == 0 {
+                "deep agent review"
+            } else {
+                "static scan"
+            };
+            let provenance = format!(
+                "Source: direct scan \u{2192} {} \u{2192} {}",
+                scan_type,
+                validation_badge(&f.validation_status),
+            );
+            finding_to_view(f, provenance)
+        })
         .collect();
-    orphan_findings.sort_by(|a, b| severity_order(&a.severity).cmp(&severity_order(&b.severity)));
-    let orphan_count = orphan_findings.len();
+    let orphan_groups = group_findings(orphan_views);
+    let orphan_count: usize = orphan_groups.iter().map(|g| g.count).sum();
 
     // Severity counts
     let severity_critical = findings.iter().filter(|f| f.severity == "Critical").count();
@@ -241,6 +317,16 @@ pub fn render_combined_report(
 
     let repo_count = repo_summaries.len();
 
+    let (learning_total_runs, learning_repos_blocklisted, learning_errors_learned) =
+        match run_memory {
+            Some(mem) => (
+                mem.total_runs,
+                mem.repo_blocklist.len(),
+                mem.error_memory.len(),
+            ),
+            None => (0, 0, 0),
+        };
+
     let report = SolGuardReport {
         generated_at: Utc::now().format("%Y-%m-%d %H:%M UTC").to_string(),
         narrative_count: narratives.len(),
@@ -257,8 +343,11 @@ pub fn render_combined_report(
         has_validation,
         narratives: narrative_views,
         repo_summaries,
-        orphan_findings,
+        orphan_groups,
         orphan_count,
+        learning_total_runs,
+        learning_repos_blocklisted,
+        learning_errors_learned,
     };
 
     report

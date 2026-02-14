@@ -33,6 +33,8 @@ pub struct ValidatedFinding {
 /// Intermediate deserialization target for the LLM's JSON output.
 #[derive(Deserialize)]
 pub struct VerdictEntry {
+    #[serde(default)]
+    pub index: Option<usize>,
     pub title: String,
     pub verdict: String,
     pub reasoning: String,
@@ -52,9 +54,9 @@ For each finding, determine a verdict:
 - **Disputed**: The vulnerability might be real but you found partial mitigations, the attack scenario is unlikely, or the severity is overstated.
 - **Dismissed**: The vulnerability is a false positive. You found concrete evidence that disproves it (e.g. a check in a parent function, unreachable code, incorrect assumptions about account types).
 
-After investigating with the tools, respond with a JSON array:
+After investigating with the tools, respond with a JSON array. Include the finding index for reliable matching:
 ```json
-[{"title": "<finding title>", "verdict": "Confirmed|Disputed|Dismissed", "reasoning": "<your analysis>"}]
+[{"index": 0, "title": "<finding title>", "verdict": "Confirmed|Disputed|Dismissed", "reasoning": "<your analysis>"}]
 ```
 
 Be thorough. Read the actual code paths. Do not rubber-stamp findings — your value is in catching false positives and overstated severity."#;
@@ -77,22 +79,32 @@ pub async fn validate(
     let mut messages: Vec<ConversationMessage> = Vec::new();
     let mut turns: u32 = 0;
     let mut total_cost_usd: f64 = 0.0;
-    let max_turns = config.max_turns.min(15);
+    // Validator gets 30% of investigator budget, capped at 5 turns
+    let max_turns = (config.max_turns * 30 / 100).max(2).min(5);
 
-    // Build initial user message with the findings as JSON.
-    let findings_json =
-        serde_json::to_string_pretty(findings).unwrap_or_else(|_| format!("{findings:?}"));
+    // Build initial user message with indexed findings.
+    let indexed_findings: String = findings
+        .iter()
+        .enumerate()
+        .map(|(i, f)| {
+            format!(
+                "Finding #{i}: {}",
+                serde_json::to_string(f).unwrap_or_else(|_| format!("{f:?}"))
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
     let initial_msg = format!(
         "Review the following {} security finding(s) against the repository at '{}'.\n\n\
          For each finding, use the tools to read the cited code and determine whether \
-         the vulnerability is real, overstated, or a false positive.\n\n\
-         Findings:\n```json\n{}\n```",
+         the vulnerability is real, overstated, or a false positive.\n\
+         Include the finding index (e.g. #0, #1) in your verdict for reliable matching.\n\n\
+         {indexed_findings}",
         findings.len(),
         repo_path
             .file_name()
             .map(|n| n.to_string_lossy().into_owned())
             .unwrap_or_else(|| "unknown".into()),
-        findings_json,
     );
 
     messages.push(ConversationMessage {
@@ -190,7 +202,7 @@ pub async fn validate(
             content: vec![ContentBlock::Text {
                 text: "You have run out of investigation turns. Based on everything you have \
                        read so far, produce your final verdicts NOW as a JSON array. \
-                       Each entry must have: title, verdict (Confirmed|Disputed|Dismissed), reasoning."
+                       Each entry must have: index, title, verdict (Confirmed|Disputed|Dismissed), reasoning."
                     .into(),
             }],
         });
@@ -216,14 +228,19 @@ pub async fn validate(
         }
     }
 
-    // Match verdicts to input findings.
+    // Match verdicts to input findings (index-first, fuzzy title fallback).
     let validated: Vec<ValidatedFinding> = findings
         .iter()
-        .map(|f| {
-            let matched = verdicts.iter().find(|v| {
-                let vt = v.title.to_lowercase();
-                let ft = f.title.to_lowercase();
-                ft.contains(&vt) || vt.contains(&ft)
+        .enumerate()
+        .map(|(i, f)| {
+            // Try index match first
+            let matched = verdicts.iter().find(|v| v.index == Some(i)).or_else(|| {
+                // Fall back to fuzzy title match
+                verdicts.iter().find(|v| {
+                    let vt = v.title.to_lowercase();
+                    let ft = f.title.to_lowercase();
+                    ft.contains(&vt) || vt.contains(&ft)
+                })
             });
 
             match matched {
@@ -271,22 +288,32 @@ pub async fn validate_findings(
     let mut messages: Vec<ConversationMessage> = Vec::new();
     let mut turns: u32 = 0;
     let mut total_cost_usd: f64 = 0.0;
-    let max_turns = config.max_turns.min(15);
+    // Validator gets 30% of investigator budget, capped at 5 turns
+    let max_turns = (config.max_turns * 30 / 100).max(2).min(5);
 
-    // Build initial user message with findings JSON.
-    let findings_json =
-        serde_json::to_string_pretty(&*findings).unwrap_or_else(|_| format!("{findings:?}"));
+    // Build initial user message with indexed findings.
+    let indexed_findings: String = findings
+        .iter()
+        .enumerate()
+        .map(|(i, f)| {
+            format!(
+                "Finding #{i}: {}",
+                serde_json::to_string(&f).unwrap_or_else(|_| format!("{f:?}"))
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
     let initial_msg = format!(
         "Review the following {} security finding(s) against the repository at '{}'.\n\n\
          For each finding, use the tools to read the cited code and determine whether \
-         the vulnerability is real, overstated, or a false positive.\n\n\
-         Findings:\n```json\n{}\n```",
+         the vulnerability is real, overstated, or a false positive.\n\
+         Include the finding index (e.g. #0, #1) in your verdict for reliable matching.\n\n\
+         {indexed_findings}",
         findings.len(),
         repo_path
             .file_name()
             .map(|n| n.to_string_lossy().into_owned())
             .unwrap_or_else(|| "unknown".into()),
-        findings_json,
     );
 
     messages.push(ConversationMessage {
@@ -382,7 +409,7 @@ pub async fn validate_findings(
             content: vec![ContentBlock::Text {
                 text: "You have run out of investigation turns. Based on everything you have \
                        read so far, produce your final verdicts NOW as a JSON array. \
-                       Each entry must have: title, verdict (Confirmed|Disputed|Dismissed), reasoning."
+                       Each entry must have: index, title, verdict (Confirmed|Disputed|Dismissed), reasoning."
                     .into(),
             }],
         });
@@ -398,12 +425,14 @@ pub async fn validate_findings(
         }
     }
 
-    // Annotate findings in-place.
-    for finding in findings.iter_mut() {
-        let matched = verdicts.iter().find(|v| {
-            let vt = v.title.to_lowercase();
-            let ft = finding.title.to_lowercase();
-            ft.contains(&vt) || vt.contains(&ft)
+    // Annotate findings in-place (index-first, fuzzy title fallback).
+    for (i, finding) in findings.iter_mut().enumerate() {
+        let matched = verdicts.iter().find(|v| v.index == Some(i)).or_else(|| {
+            verdicts.iter().find(|v| {
+                let vt = v.title.to_lowercase();
+                let ft = finding.title.to_lowercase();
+                ft.contains(&vt) || vt.contains(&ft)
+            })
         });
 
         match matched {

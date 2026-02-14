@@ -42,6 +42,7 @@ Respond in JSON:
 }
 
 Rules:
+- Narratives corroborated by 3+ source types should receive higher confidence scores than those backed by only 2 sources.
 - Only report narratives you're confident about. Quality over quantity.
 - Every claim must be backed by specific signals from the input data.
 - Quantify everything. "Growing" is weak; "42% increase in new repos" is strong.

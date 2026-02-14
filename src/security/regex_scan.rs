@@ -1,5 +1,5 @@
 use super::{Finding, Severity};
-use fancy_regex::Regex;
+use fancy_regex::RegexBuilder;
 use std::path::Path;
 use std::sync::LazyLock;
 
@@ -11,6 +11,7 @@ struct Pattern {
     regex: &'static str,
     remediation: &'static str,
     references: &'static [&'static str],
+    line_span: usize,
 }
 
 static PATTERNS: &[Pattern] = &[
@@ -23,16 +24,19 @@ static PATTERNS: &[Pattern] = &[
         regex: r"(?m)^[^/]*pub\s+(\w+)\s*:\s*(?:Account|AccountInfo|UncheckedAccount)(?!.*(?:has_one|constraint|signer))",
         remediation: "Add `Signer<'info>` type or `#[account(signer)]` constraint to enforce authorization.",
         references: &["https://www.soldev.app/course/signer-auth"],
+        line_span: 1,
     },
     Pattern {
         id: "SOL-002",
         title: "Missing Owner Validation",
-        description: "Account deserialized without owner = program_id constraint. \
-                      An attacker could pass an account owned by a different program with crafted data.",
+        description: "Raw AccountInfo deserialized via next_account_info without owner check. \
+                      An attacker could pass an account owned by a different program with crafted data. \
+                      Anchor's Account<> type checks owner automatically — this targets native programs only.",
         severity: Severity::High,
-        regex: r"(?m)#\[account\([^)]*\)\]\s*pub\s+\w+\s*:\s*Account<[^>]+>(?!.*owner\s*=)",
-        remediation: "Add `owner = crate::ID` or equivalent constraint. For Anchor, `Account<>` checks owner by default — verify the program ID matches.",
+        regex: r"next_account_info\s*\(",
+        remediation: "Add `if account.owner != program_id { return Err(ProgramError::IncorrectProgramId) }` after deserializing. Anchor's `Account<>` checks owner automatically.",
         references: &["https://www.soldev.app/course/owner-checks"],
+        line_span: 1,
     },
     Pattern {
         id: "SOL-003",
@@ -43,6 +47,7 @@ static PATTERNS: &[Pattern] = &[
         regex: r"(?m)(?:amount|balance|supply|lamports|quantity|total|reserve)\s*(?:\+|-|\*)\s*(?:amount|balance|supply|lamports|quantity|total|reserve|[0-9])",
         remediation: "Use `checked_add()`, `checked_sub()`, `checked_mul()` or `saturating_*` variants.",
         references: &["CWE-190"],
+        line_span: 1,
     },
     Pattern {
         id: "SOL-004",
@@ -53,6 +58,7 @@ static PATTERNS: &[Pattern] = &[
         regex: r"remaining_accounts(?:\s*\.|\s*\[)",
         remediation: "Validate each account in remaining_accounts: check owner, check key against expected PDA, verify signer status.",
         references: &[],
+        line_span: 1,
     },
     Pattern {
         id: "SOL-005",
@@ -63,6 +69,7 @@ static PATTERNS: &[Pattern] = &[
         regex: r"find_program_address\s*\(",
         remediation: "Store the canonical bump in account data and verify it in subsequent instructions using `seeds` + `bump = stored_bump`.",
         references: &["https://www.soldev.app/course/bump-seed-canonicalization"],
+        line_span: 1,
     },
     Pattern {
         id: "SOL-006",
@@ -70,9 +77,10 @@ static PATTERNS: &[Pattern] = &[
         description: "Account closed by transferring lamports but data not zeroed. \
                       Revival attack: within the same transaction, account can be re-opened with stale data.",
         severity: Severity::Critical,
-        regex: r"(?m)(?:close|lamports\.borrow_mut|sub_lamports)(?:(?!assign|realloc|data\.borrow_mut\(\)\.fill\(0\)).)*$",
+        regex: r"(?m)(?:close|lamports\.borrow_mut|sub_lamports)(?![^\n]*(?:assign|realloc|data\.borrow_mut\(\)\.fill\(0\)))[^\n]*$",
         remediation: "After transferring lamports, zero the account data: `account.data.borrow_mut().fill(0)`. Or use Anchor's `#[account(close = destination)]`.",
         references: &["https://www.soldev.app/course/closing-accounts"],
+        line_span: 1,
     },
     Pattern {
         id: "SOL-007",
@@ -83,6 +91,7 @@ static PATTERNS: &[Pattern] = &[
         regex: r"invoke(?:_signed)?\s*\(\s*&[^,]*(?:program_id|program_key|target_program)",
         remediation: "Hardcode the target program ID or validate it against a known constant.",
         references: &["https://www.soldev.app/course/arbitrary-cpi"],
+        line_span: 1,
     },
     Pattern {
         id: "SOL-008",
@@ -93,6 +102,7 @@ static PATTERNS: &[Pattern] = &[
         regex: r"(?:try_from_slice|deserialize|from_bytes)\s*\(",
         remediation: "Use Anchor's Account<> type (auto-checks discriminator) or manually verify the 8-byte discriminator.",
         references: &["https://www.soldev.app/course/type-cosplay"],
+        line_span: 1,
     },
     Pattern {
         id: "SOL-009",
@@ -103,6 +113,7 @@ static PATTERNS: &[Pattern] = &[
         regex: r"/\s*\w+\s*\)\s*(?:\.\s*)?(?:checked_mul|saturating_mul|\*)",
         remediation: "Reorder: multiply first, then divide. Or use u128 intermediate precision.",
         references: &["CWE-682"],
+        line_span: 1,
     },
     Pattern {
         id: "SOL-010",
@@ -113,56 +124,68 @@ static PATTERNS: &[Pattern] = &[
         regex: r"spl_token::instruction::transfer(?!_checked)",
         remediation: "Use `transfer_checked` instead of `transfer`. Check for Token-2022 extensions.",
         references: &["https://spl.solana.com/token-2022"],
+        line_span: 1,
     },
 ];
 
 pub fn scan(content: &str, file_path: &Path) -> Vec<Finding> {
-    static COMPILED: LazyLock<Vec<(Regex, usize)>> = LazyLock::new(|| {
+    static COMPILED: LazyLock<Vec<(fancy_regex::Regex, usize)>> = LazyLock::new(|| {
         PATTERNS
             .iter()
             .enumerate()
-            .filter_map(|(i, p)| Regex::new(p.regex).ok().map(|r| (r, i)))
+            .filter_map(|(i, p)| {
+                RegexBuilder::new(p.regex)
+                    .backtrack_limit(10_000)
+                    .build()
+                    .ok()
+                    .map(|r| (r, i))
+            })
             .collect()
     });
 
+    let lines: Vec<&str> = content.lines().collect();
     let mut findings = Vec::new();
 
     for (regex, pattern_idx) in COMPILED.iter() {
         let pattern = &PATTERNS[*pattern_idx];
+        let span = pattern.line_span;
 
-        for mat in regex.find_iter(content).flatten() {
-            let line_number = content[..mat.start()].matches('\n').count() + 1;
+        // Scan with sliding window to prevent catastrophic backtracking on large files
+        for line_idx in 0..lines.len() {
+            let line_number = line_idx + 1;
 
-            let lines: Vec<&str> = content.lines().collect();
-
-            // Skip matches on comment lines
-            if line_number > 0 && line_number <= lines.len() {
-                let line = lines[line_number - 1].trim_start();
-                if line.starts_with("//") || line.starts_with("///") || line.starts_with("*") {
-                    continue;
-                }
+            // Skip comment lines
+            let trimmed = lines[line_idx].trim_start();
+            if trimmed.starts_with("//") || trimmed.starts_with("///") || trimmed.starts_with("*") {
+                continue;
             }
-            let start = line_number.saturating_sub(3);
-            let end = (line_number + 3).min(lines.len());
-            let snippet: String = lines[start..end]
-                .iter()
-                .enumerate()
-                .map(|(i, line)| format!("{:>4} | {line}", start + i + 1))
-                .collect::<Vec<_>>()
-                .join("\n");
 
-            findings.push(Finding {
-                pattern_id: pattern.id.to_string(),
-                title: pattern.title.to_string(),
-                description: pattern.description.to_string(),
-                severity: pattern.severity.clone(),
-                file_path: file_path.to_path_buf(),
-                line_number,
-                code_snippet: snippet,
-                remediation: pattern.remediation.to_string(),
-                confidence: 0.6,
-                references: pattern.references.iter().map(|s| s.to_string()).collect(),
-            });
+            let window_end = (line_idx + span).min(lines.len());
+            let window: String = lines[line_idx..window_end].join("\n");
+
+            if regex.is_match(&window).unwrap_or(false) {
+                let start = line_number.saturating_sub(3);
+                let end = (line_number + 3).min(lines.len());
+                let snippet: String = lines[start..end]
+                    .iter()
+                    .enumerate()
+                    .map(|(i, l)| format!("{:>4} | {l}", start + i + 1))
+                    .collect::<Vec<_>>()
+                    .join("\n");
+
+                findings.push(Finding {
+                    pattern_id: pattern.id.to_string(),
+                    title: pattern.title.to_string(),
+                    description: pattern.description.to_string(),
+                    severity: pattern.severity.clone(),
+                    file_path: file_path.to_path_buf(),
+                    line_number,
+                    code_snippet: snippet,
+                    remediation: pattern.remediation.to_string(),
+                    confidence: 0.6,
+                    references: pattern.references.iter().map(|s| s.to_string()).collect(),
+                });
+            }
         }
     }
 
@@ -201,7 +224,7 @@ mod tests {
 
     #[test]
     fn sol_002_positive() {
-        let findings = scan_one("#[account()]\npub vault: Account<'info, Vault>");
+        let findings = scan_one("let account = next_account_info(iter)?;");
         assert!(
             findings
                 .iter()
@@ -211,17 +234,16 @@ mod tests {
     }
 
     #[test]
-    fn sol_002_negative() {
-        // Known regex limitation: the negative lookahead for `owner =` is positioned
-        // after Account<>, but `owner =` inside #[account(...)] is consumed by [^)]*
-        // before the lookahead fires. So the regex still matches even with owner
-        // specified. This test documents the limitation — a fix would require
-        // restructuring the regex or adding post-match filtering.
-        let findings = scan_one("#[account(owner = crate::ID)]\npub vault: Account<'info, Vault>");
-        assert!(
-            findings.iter().any(|f| f.pattern_id == "SOL-002"),
-            "SOL-002 should match (known regex limitation — owner= inside attribute not detected)"
-        );
+    fn sol_002_negative_anchor() {
+        // Anchor Account<> fields should NOT trigger SOL-002
+        let findings = scan_one("pub vault: Account<'info, Vault>");
+        assert!(!findings.iter().any(|f| f.pattern_id == "SOL-002"));
+    }
+
+    #[test]
+    fn sol_002_negative_signer() {
+        let findings = scan_one("pub authority: Signer<'info>");
+        assert!(!findings.iter().any(|f| f.pattern_id == "SOL-002"));
     }
 
     // -- SOL-003: Unchecked Arithmetic --
