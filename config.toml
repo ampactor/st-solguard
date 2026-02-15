@@ -70,8 +70,8 @@ model = "llama-3.3-70b-versatile"
 max_tokens = 4096
 
 [models]
-investigation = { provider = "openrouter", model = "qwen/qwen3-coder:free" }
-validation = { provider = "openrouter", model = "qwen/qwen3-coder:free" }
+investigation = { provider = "openrouter", model = "openai/gpt-oss-120b:free" }
+validation = { provider = "openrouter", model = "openai/gpt-oss-120b:free" }
 cross_reference = { provider = "groq", model = "llama-3.1-8b-instant" }
 
 [targets]

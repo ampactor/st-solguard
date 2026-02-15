@@ -265,17 +265,25 @@ pub async fn scan_repo_deep(
     Ok(findings)
 }
 
+/// Check if a Cargo.toml contains Solana-related dependencies.
+fn is_solana_cargo(content: &str) -> bool {
+    content.contains("solana-program")
+        || content.contains("anchor-lang")
+        || content.contains("pinocchio")
+        || content.contains("solana-sdk")
+}
+
 /// Check whether a repository looks like a Solana program project.
 ///
 /// Returns true if Anchor.toml exists at root, or any Cargo.toml in the tree
-/// declares `solana-program` or `anchor-lang` as a dependency.
+/// declares `solana-program`, `anchor-lang`, or `pinocchio` as a dependency.
 fn is_solana_project(root: &Path) -> bool {
     if root.join("Anchor.toml").exists() {
         return true;
     }
     // Check root Cargo.toml
     if let Ok(content) = std::fs::read_to_string(root.join("Cargo.toml"))
-        && (content.contains("solana-program") || content.contains("anchor-lang"))
+        && is_solana_cargo(&content)
     {
         return true;
     }
@@ -288,7 +296,22 @@ fn is_solana_project(root: &Path) -> bool {
             for entry in entries.flatten() {
                 let cargo = entry.path().join("Cargo.toml");
                 if let Ok(content) = std::fs::read_to_string(&cargo)
-                    && (content.contains("solana-program") || content.contains("anchor-lang"))
+                    && is_solana_cargo(&content)
+                {
+                    return true;
+                }
+            }
+        }
+    }
+    // Check ALL immediate subdirectories for Cargo.toml with Solana markers.
+    // Catches repos like shielded-pool where the program lives in a
+    // non-standard subdirectory (e.g. shielded_pool_program/).
+    if let Ok(entries) = std::fs::read_dir(root) {
+        for entry in entries.flatten() {
+            if entry.path().is_dir() {
+                let cargo = entry.path().join("Cargo.toml");
+                if let Ok(content) = std::fs::read_to_string(&cargo)
+                    && is_solana_cargo(&content)
                 {
                     return true;
                 }
