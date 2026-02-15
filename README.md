@@ -6,19 +6,9 @@ Built on narrative intelligence from [SolScout](https://github.com/ampactor/st-n
 
 ## What It Found
 
-SolGuard's narrative detection identified a Privacy trend on Solana — a new ZK shielded pool (`shielded-pool-pinocchio-solana`) built with raw Pinocchio, Groth16/Noir circuits, and explicitly marked "NOT AUDITED." The agent autonomously cloned the repo, scanned it, and triggered deep code review.
+SolGuard's narrative detection identified a Privacy trend on Solana — a new ZK shielded pool marked "NOT AUDITED." The agent autonomously cloned the repo, scanned it, and discovered a **complete vault-drain exploit chain** (3 Critical + 2 High + 2 Medium findings). Full proof-of-concept and exploit walkthrough: **[shielded-pool-vault-drain.md](https://github.com/psi-c/st-audit/blob/main/pocs/shielded-pool-vault-drain.md)**.
 
-The result: a **complete vault-drain exploit chain**. The program accepts Merkle roots directly from instruction data without verification — there is no on-chain Merkle tree. Combined with zero-amount deposits (Solana allows 0-lamport transfers), an attacker can:
-
-1. Deposit 0 SOL with a fabricated Merkle root containing a commitment for the full vault balance
-2. Generate a valid ZK proof against their own root (it's genuinely valid — the attacker built the tree)
-3. Withdraw every lamport in the vault in a single transaction
-
-**Cost:** ~10,000 lamports (two transaction fees). **Impact:** Total loss of all deposited funds.
-
-Three Critical findings compose the chain: client-supplied root acceptance (C-01), no on-chain commitment storage (C-02), and zero-amount deposits (C-03). Plus 2 High and 2 Medium findings in the same program.
-
-No regex or AST pattern can detect this. It's an architectural vulnerability — the program's trust model is fundamentally broken. SolGuard found it because narrative signals pointed at unaudited code in an emerging sector.
+The key insight: no regex or AST pattern can detect this — it's an architectural vulnerability found because narrative signals pointed at unaudited code in an emerging sector. That's narrative-informed targeting in action.
 
 **For comparison:** Round 1 scanned 4 mature, audited repos (Raydium, Switchboard, Tensor) — 155 static findings, zero real vulnerabilities. Round 2 used narrative-informed targeting on unaudited repos — 7 confirmed vulnerabilities including the vault drain.
 
@@ -85,6 +75,14 @@ cargo run -- scan path/to/repo                  # security scan only
 cargo run -- scan path/to/repo --deep           # + multi-turn LLM agent review
 cargo run -- render -n narratives.json -f findings.json -o report.html  # offline render
 ```
+
+## Required API Keys
+
+| Subcommand | Keys Needed |
+|------------|-------------|
+| `scan` | None (static analysis only) |
+| `narratives` | `GITHUB_TOKEN` + `GROQ_API_KEY` (or configured LLM provider) |
+| `run` | `GITHUB_TOKEN` + `GROQ_API_KEY` + `OPENROUTER_API_KEY` |
 
 ## Tech Stack
 
