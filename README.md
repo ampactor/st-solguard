@@ -2,7 +2,7 @@
 
 **Autonomous agent that finds ecosystem landmines: growing Solana projects with critical security gaps.**
 
-Built on narrative intelligence from [SolScout](../st-narrative/) and scanning methodology from [SolScout Scanner](../st-audit/). SolGuard is the autonomous orchestrator that combines both into a narrative-informed security intelligence pipeline.
+Built on narrative intelligence from [SolScout](https://github.com/ampactor/st-narrative) and scanning methodology from [SolScout Scanner](https://github.com/ampactor/st-audit). SolGuard is the autonomous orchestrator that combines both into a narrative-informed security intelligence pipeline.
 
 ## What It Found
 

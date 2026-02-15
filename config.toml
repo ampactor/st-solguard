@@ -75,7 +75,7 @@ validation = { provider = "openrouter", model = "openai/gpt-oss-120b:free" }
 cross_reference = { provider = "groq", model = "llama-3.1-8b-instant" }
 
 [targets]
-repos_dir = "../st-audit/repos"
+repos_dir = "./repos"
 always_scan = [
     "raydium-cp-swap", "jito-programs", "mpl-token-metadata",
     "tensor-marketplace", "switchboard", "shielded-pool-pinocchio-solana",

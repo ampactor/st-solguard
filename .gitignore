@@ -5,3 +5,6 @@
 /repos/
 *.html
 /findings/
+CLAUDE.md
+THINK_TANK_SYNTHESIS.md
+pipeline-output.log
