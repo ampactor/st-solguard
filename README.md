@@ -6,7 +6,7 @@ Built on narrative intelligence from [SolScout](https://github.com/ampactor/st-n
 
 ## What It Found
 
-SolGuard's narrative detection identified a Privacy trend on Solana — a new ZK shielded pool marked "NOT AUDITED." The agent autonomously cloned the repo, scanned it, and discovered a **complete vault-drain exploit chain** (3 Critical + 2 High + 2 Medium findings). Full proof-of-concept and exploit walkthrough: **[shielded-pool-vault-drain.md](https://github.com/psi-c/st-audit/blob/main/pocs/shielded-pool-vault-drain.md)**.
+SolGuard's narrative detection identified a Privacy trend on Solana — a new ZK shielded pool marked "NOT AUDITED." The agent autonomously cloned the repo, scanned it, and discovered a **complete vault-drain exploit chain** (3 Critical + 2 High + 2 Medium findings). Full proof-of-concept and exploit walkthrough: **[shielded-pool-vault-drain.md](https://github.com/ampactor/st-audit/blob/main/pocs/shielded-pool-vault-drain.md)**.
 
 The key insight: no regex or AST pattern can detect this — it's an architectural vulnerability found because narrative signals pointed at unaudited code in an emerging sector. That's narrative-informed targeting in action.
 
@@ -53,7 +53,7 @@ No human-curated target lists. No manual triage. No hand-picked repos. The agent
 
 The vault-drain exploit chain (3 Critical findings composing a complete attack path) was discovered by the pipeline running exactly this command. A human pointed it at a config file. The agent did the rest.
 
-**134 tests** verify scanner accuracy, agent orchestration, report generation, and cross-reference logic. The pipeline is reproducible: same config → same signal sources → deterministic scoring.
+**98 tests** verify scanner accuracy, agent orchestration, report generation, and cross-reference logic. The pipeline is reproducible: same config → same signal sources → deterministic scoring.
 
 ## Why This Matters
 
