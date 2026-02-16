@@ -38,7 +38,7 @@
             </div>
             <div class="text-right text-sm text-gray-500">
                 <p>Generated: {{ generated_at }}</p>
-                <p>{{ narrative_count }} narratives | {{ finding_count }} findings across {{ repo_count }} repos</p>
+                <p>{{ narrative_count }} narratives | {{ finding_count }} findings across {{ repo_count }} repo{% if repo_count != 1 %}s{% endif %}</p>
             </div>
         </div>
     </header>
@@ -68,7 +68,7 @@
         {% if narrative_count > 0 && finding_count > 0 %}
         <div class="bg-yellow-900/20 border border-yellow-800 rounded-lg p-4">
             <h3 class="text-yellow-400 font-semibold mb-2">Ecosystem Risk Map</h3>
-            <p class="text-gray-300 text-sm">SolGuard detected <strong>{{ narrative_count }}</strong> growth narratives and scanned <strong>{{ repo_count }}</strong> repos from those emerging sectors. Found <strong>{{ finding_count }}</strong> vulnerability patterns — {{ critical_count }} at Critical/High severity.{% if has_validation %} Adversarial validation confirmed <strong>{{ confirmed_count }}</strong> findings and disputed <strong>{{ disputed_count }}</strong>.{% endif %} Repos in fast-growing sectors often ship faster than they audit.</p>
+            <p class="text-gray-300 text-sm">SolGuard detected <strong>{{ narrative_count }}</strong> growth narratives and scanned <strong>{{ repo_count }}</strong> repo{% if repo_count != 1 %}s{% endif %} from those emerging sectors. Found <strong>{{ finding_count }}</strong> vulnerability patterns — {{ critical_count }} at Critical/High severity.{% if has_validation %} Adversarial validation confirmed <strong>{{ confirmed_count }}</strong> findings and disputed <strong>{{ disputed_count }}</strong>.{% endif %} Repos in fast-growing sectors often ship faster than they audit.</p>
         </div>
         {% endif %}
 
@@ -160,7 +160,7 @@
                         <p class="text-gray-500 text-xs mt-1 italic">{{ n.repo_context }}</p>
                         <div class="mt-2 flex gap-2">
                             <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.trend }}</span>
-                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.repo_count }} repos</span>
+                            <span class="text-xs bg-gray-800 text-gray-300 px-2 py-0.5 rounded">{{ n.repo_count }} repo{% if n.repo_count != 1 %}s{% endif %}</span>
                             {% if n.finding_count > 0 %}
                             <span class="text-xs bg-red-900/30 text-red-400 px-2 py-0.5 rounded">
                                 {{ n.finding_count }} findings
