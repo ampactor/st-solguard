@@ -56,7 +56,7 @@ async fn scrape_source(http: &HttpClient, name: &str, url: &str) -> Result<Vec<S
     articles.sort();
     articles.dedup();
 
-    let solana_count = articles
+    let solana_articles: Vec<String> = articles
         .iter()
         .filter(|t| {
             let lower = t.to_lowercase();
@@ -72,13 +72,20 @@ async fn scrape_source(http: &HttpClient, name: &str, url: &str) -> Result<Vec<S
                 || lower.contains("blockchain")
                 || lower.contains("crypto")
         })
-        .count();
+        .cloned()
+        .collect();
+    let solana_count = solana_articles.len();
 
     if articles.is_empty() {
         return Ok(Vec::new());
     }
 
-    let titles: Vec<String> = articles.iter().take(10).cloned().collect();
+    let source = if !solana_articles.is_empty() {
+        &solana_articles
+    } else {
+        &articles
+    };
+    let titles: Vec<String> = source.iter().take(10).cloned().collect();
 
     Ok(vec![Signal {
         source: SignalSource::Social,

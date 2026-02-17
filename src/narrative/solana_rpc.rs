@@ -83,14 +83,18 @@ pub async fn collect(config: &SolanaConfig, http: &HttpClient) -> Result<Vec<Sig
             .sum::<f64>()
             / perf_samples.len() as f64;
 
-        let avg_non_vote_tps: f64 = perf_samples
+        let non_vote_tps_values: Vec<f64> = perf_samples
             .iter()
             .filter_map(|s| {
                 s.num_non_vote_transactions
                     .map(|nv| nv as f64 / s.sample_period_secs as f64)
             })
-            .sum::<f64>()
-            / perf_samples.len() as f64;
+            .collect();
+        let avg_non_vote_tps: f64 = if non_vote_tps_values.is_empty() {
+            0.0
+        } else {
+            non_vote_tps_values.iter().sum::<f64>() / non_vote_tps_values.len() as f64
+        };
 
         signals.push(Signal {
             source: SignalSource::SolanaOnchain,
