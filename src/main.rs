@@ -76,6 +76,7 @@ fn make_llm_override(provider: Option<String>, model: Option<String>) -> Option<
             "anthropic" => llm::Provider::Anthropic,
             "openai" => llm::Provider::OpenAi,
             "groq" => llm::Provider::Groq,
+            "claudecode" => llm::Provider::ClaudeCode,
             _ => llm::Provider::OpenRouter,
         })
         .unwrap_or_default();

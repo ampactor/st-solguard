@@ -65,14 +65,15 @@ enabled = true
 top_protocols = 10
 
 [llm]
-provider = "groq"
-model = "llama-3.3-70b-versatile"
+provider = "claudecode"
+model = "opus"
 max_tokens = 4096
 
-[models]
-investigation = { provider = "openrouter", model = "openai/gpt-oss-120b:free" }
-validation = { provider = "openrouter", model = "openai/gpt-oss-120b:free" }
-cross_reference = { provider = "groq", model = "llama-3.1-8b-instant" }
+# Per-task overrides (uncomment to split providers):
+# [models]
+# investigation = { provider = "claudecode", model = "opus" }
+# validation = { provider = "claudecode", model = "opus" }
+# cross_reference = { provider = "groq", model = "llama-3.1-8b-instant" }
 
 [targets]
 repos_dir = "./repos"

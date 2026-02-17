@@ -16,6 +16,8 @@ pub enum Provider {
     #[serde(rename = "openai")]
     OpenAi,
     Groq,
+    /// Local Claude Code CLI — shells out to `claude -p`.
+    ClaudeCode,
 }
 
 impl Provider {
@@ -25,6 +27,7 @@ impl Provider {
             Self::OpenRouter => "https://openrouter.ai/api/v1",
             Self::OpenAi => "http://localhost:11434/v1",
             Self::Groq => "https://api.groq.com/openai/v1",
+            Self::ClaudeCode => "",
         }
     }
 
@@ -34,6 +37,7 @@ impl Provider {
             Self::OpenRouter => "OPENROUTER_API_KEY",
             Self::OpenAi => "OPENAI_API_KEY",
             Self::Groq => "GROQ_API_KEY",
+            Self::ClaudeCode => "",
         }
     }
 }
@@ -251,6 +255,9 @@ impl LlmClient {
         api_key_env: Option<String>,
         base_url: Option<String>,
     ) -> Result<Self> {
+        if matches!(provider, Provider::ClaudeCode) {
+            return Self::new(provider, String::new(), model, max_tokens, base_url);
+        }
         let env_var = api_key_env.unwrap_or_else(|| provider.default_api_key_env().into());
         let api_key = std::env::var(&env_var).map_err(|_| {
             Error::config(format!(
@@ -277,6 +284,7 @@ impl LlmClient {
             Provider::OpenRouter | Provider::OpenAi | Provider::Groq => {
                 self.complete_openai(system, user_message).await
             }
+            Provider::ClaudeCode => self.complete_claudecode(system, user_message).await,
         }
     }
 
@@ -400,6 +408,7 @@ impl LlmClient {
             Provider::OpenRouter | Provider::OpenAi | Provider::Groq => {
                 self.converse_openai(system, messages, tools).await
             }
+            Provider::ClaudeCode => self.converse_claudecode(system, messages, tools).await,
         }
     }
 
@@ -629,6 +638,101 @@ impl LlmClient {
             stop_reason,
             usage,
         })
+    }
+
+    // -- Claude Code CLI subprocess --
+
+    async fn complete_claudecode(&self, system: &str, user_message: &str) -> Result<String> {
+        let output = tokio::process::Command::new("claude")
+            .args([
+                "-p",
+                user_message,
+                "--model",
+                &self.model,
+                "--output-format",
+                "json",
+                "--append-system-prompt",
+                system,
+            ])
+            .env_remove("CLAUDECODE")
+            .output()
+            .await
+            .map_err(|e| Error::config(format!("claude CLI not found or failed to start: {e}")))?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(Error::api(
+                "claude-cli",
+                format!("claude -p failed: {stderr}"),
+            ));
+        }
+
+        let json: Value = serde_json::from_slice(&output.stdout)
+            .map_err(|e| Error::parse(format!("claude -p JSON parse: {e}")))?;
+        Ok(json["result"].as_str().unwrap_or("").to_string())
+    }
+
+    async fn converse_claudecode(
+        &self,
+        system: &str,
+        messages: &[ConversationMessage],
+        _tools: &[ToolDef],
+    ) -> Result<ConversationResponse> {
+        let prompt = Self::format_claudecode_prompt(messages);
+
+        let output = tokio::process::Command::new("claude")
+            .args([
+                "-p",
+                &prompt,
+                "--model",
+                &self.model,
+                "--output-format",
+                "json",
+                "--append-system-prompt",
+                system,
+                "--allowedTools",
+                "Read,Grep,Glob,Bash",
+            ])
+            .env_remove("CLAUDECODE")
+            .output()
+            .await
+            .map_err(|e| Error::config(format!("claude CLI: {e}")))?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(Error::api(
+                "claude-cli",
+                format!("claude -p failed: {stderr}"),
+            ));
+        }
+
+        let json: Value = serde_json::from_slice(&output.stdout)
+            .map_err(|e| Error::parse(format!("claude -p JSON: {e}")))?;
+
+        let result_text = json["result"].as_str().unwrap_or("").to_string();
+
+        let usage = Usage {
+            input_tokens: json["usage"]["input_tokens"].as_u64().unwrap_or(0) as u32,
+            output_tokens: json["usage"]["output_tokens"].as_u64().unwrap_or(0) as u32,
+        };
+
+        Ok(ConversationResponse {
+            content: vec![ContentBlock::Text { text: result_text }],
+            stop_reason: StopReason::EndTurn,
+            usage,
+        })
+    }
+
+    fn format_claudecode_prompt(messages: &[ConversationMessage]) -> String {
+        let mut parts = Vec::new();
+        for msg in messages {
+            for block in &msg.content {
+                if let ContentBlock::Text { text } = block {
+                    parts.push(text.clone());
+                }
+            }
+        }
+        parts.join("\n\n")
     }
 
     fn messages_to_openai(system: &str, messages: &[ConversationMessage]) -> Vec<Value> {
