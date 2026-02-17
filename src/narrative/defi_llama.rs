@@ -46,7 +46,7 @@ pub async fn collect(config: &DefiLlamaConfig, http: &HttpClient) -> Result<Vec<
             .map(|r| r + 1);
 
         signals.push(Signal {
-            source: SignalSource::SolanaOnchain,
+            source: SignalSource::DeFiLlama,
             category: "DeFi TVL".into(),
             title: format!(
                 "Solana Chain TVL: ${tvl_billions:.2}B{}",
@@ -102,7 +102,7 @@ pub async fn collect(config: &DefiLlamaConfig, http: &HttpClient) -> Result<Vec<
         let total_solana_tvl: f64 = solana_protocols.iter().filter_map(|p| p.tvl).sum();
 
         signals.push(Signal {
-            source: SignalSource::SolanaOnchain,
+            source: SignalSource::DeFiLlama,
             category: "DeFi TVL".into(),
             title: format!(
                 "Top {} Solana DeFi Protocols by TVL ({} total Solana protocols tracked)",
@@ -155,7 +155,7 @@ pub async fn collect(config: &DefiLlamaConfig, http: &HttpClient) -> Result<Vec<
             .collect();
 
         signals.push(Signal {
-            source: SignalSource::SolanaOnchain,
+            source: SignalSource::DeFiLlama,
             category: "DeFi TVL".into(),
             title: format!(
                 "Solana DeFi Category Breakdown ({} categories)",

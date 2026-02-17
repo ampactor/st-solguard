@@ -255,10 +255,31 @@ pub fn render_combined_report(
         })
         .collect();
 
-    // Orphan findings suppressed — unlinked findings clutter the report
-    // and make the tool look broken to judges (636 orphans in live report).
-    let orphan_groups: Vec<GroupedFinding> = Vec::new();
-    let orphan_count: usize = 0;
+    // Orphan findings: not linked to any narrative — render under "Additional Findings"
+    let linked_indices: std::collections::HashSet<usize> = narratives
+        .iter()
+        .flat_map(|n| n.repo_findings.iter().flat_map(|(_, v)| v.iter().copied()))
+        .collect();
+    let orphan_views: Vec<FindingView> = findings
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| !linked_indices.contains(i))
+        .map(|(_, f)| {
+            let scan_type = if f.line_number == 0 {
+                "deep agent review"
+            } else {
+                "static scan"
+            };
+            let provenance = format!(
+                "Source: {} \u{2192} {}",
+                scan_type,
+                validation_badge(&f.validation_status),
+            );
+            finding_to_view(f, provenance)
+        })
+        .collect();
+    let orphan_count = orphan_views.len();
+    let orphan_groups = group_findings(orphan_views);
 
     // Severity counts
     let severity_critical = findings.iter().filter(|f| f.severity == "Critical").count();
