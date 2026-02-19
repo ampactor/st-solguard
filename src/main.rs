@@ -44,8 +44,9 @@ fn build_model_router(
     let mut router = llm::ModelRouter::new(default);
 
     if let Some(ref models) = cfg.models {
-        let pairs: [(&Option<config::ModelConfig>, llm::TaskKind); 4] = [
+        let pairs: [(&Option<config::ModelConfig>, llm::TaskKind); 5] = [
             (&models.narrative, llm::TaskKind::NarrativeSynthesis),
+            (&models.discovery, llm::TaskKind::NarrativeDiscovery),
             (&models.investigation, llm::TaskKind::DeepInvestigation),
             (&models.validation, llm::TaskKind::Validation),
             (&models.cross_reference, llm::TaskKind::CrossReference),
@@ -283,8 +284,10 @@ async fn main() -> Result<()> {
             model,
         } => {
             let llm_override = make_llm_override(provider, model);
+            let cfg = config::Config::load(&config).unwrap_or_default();
+            let router = build_model_router(&cfg, llm_override.as_ref())?;
             let narratives =
-                narrative::run_narrative_pipeline(&config, llm_override.as_ref()).await?;
+                narrative::run_narrative_pipeline(&config, llm_override.as_ref(), &router).await?;
             let json = serde_json::to_string_pretty(&narratives)?;
             println!("{json}");
             Ok(())

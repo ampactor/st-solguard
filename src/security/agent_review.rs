@@ -8,7 +8,8 @@
 
 use crate::config::AgentReviewConfig;
 use crate::llm::{
-    ContentBlock, ConversationMessage, LlmClient, Role, StopReason, Usage, estimate_cost_usd,
+    ContentBlock, ConversationMessage, ConverseContext, LlmClient, Role, StopReason, Usage,
+    estimate_cost_usd,
 };
 use crate::security::agent_tools;
 use anyhow::Result;
@@ -154,17 +155,26 @@ pub async fn investigate(
         .map(|n| n.to_string_lossy().into_owned())
         .unwrap_or_else(|| "unknown".into());
 
+    let repo_abs = repo_path
+        .canonicalize()
+        .unwrap_or_else(|_| repo_path.to_path_buf());
     let mut initial_msg = format!(
-        "Investigate the repository '{repo_name}' for security vulnerabilities.\n\n\
+        "Investigate the Solana program repository at `{}`.\n\
+         The code is on your local filesystem. Use Read, Grep, and Glob tools to explore it.\n\n\
          Start by understanding the project structure, then systematically trace \
          trust boundaries and fund flows. Focus on finding REAL, exploitable \
          vulnerabilities with clear evidence.\n\n\
-         Begin by listing the top-level files and reading the main entry point."
+         Begin by listing the top-level files and reading the main entry point.",
+        repo_abs.display()
     );
 
     if let Some(triage) = triage_context {
         initial_msg.push_str(&format!(
-            "\n\n## Scanner Triage Results (verify each — most are false positives)\n\n{triage}"
+            "\n\n## Scanner Leads (automated pattern matches — verify by reading actual code)\n\
+             These are surface-level regex hits. Most are false positives. For each:\n\
+             READ the cited file to determine if the pattern indicates a real vulnerability.\n\
+             Then investigate BEYOND these leads for architectural issues patterns can't detect.\n\n\
+             {triage}"
         ));
     }
 
@@ -242,7 +252,11 @@ pub async fn investigate(
         }
 
         // Send conversation to LLM
-        let response = match llm.converse(SYSTEM_PROMPT, &messages, &tools).await {
+        let ctx = ConverseContext { repo_path };
+        let response = match llm
+            .converse(SYSTEM_PROMPT, &messages, &tools, Some(&ctx))
+            .await
+        {
             Ok(r) => r,
             Err(e) => {
                 warn!(error = %e, "LLM converse failed");
@@ -376,7 +390,11 @@ pub async fn investigate(
                     .into(),
             }],
         });
-        if let Ok(response) = llm.converse(SYSTEM_PROMPT, &messages, &[]).await {
+        let ctx = ConverseContext { repo_path };
+        if let Ok(response) = llm
+            .converse(SYSTEM_PROMPT, &messages, &[], Some(&ctx))
+            .await
+        {
             stats.accumulate(&response.usage, llm.model());
             // Log what the model actually said for debugging
             for block in &response.content {
@@ -494,13 +512,27 @@ pub fn try_parse_findings(text: &str) -> Option<Vec<AgentFinding>> {
 }
 
 /// Convert scanner findings into triage context text for the agent.
+///
+/// Caps at top 20 findings sorted by severity to prevent token bloat
+/// when static scanners produce hundreds of hits.
 pub fn format_triage_context(findings: &[super::SecurityFinding]) -> String {
     if findings.is_empty() {
         return "No scanner findings to verify.".into();
     }
 
+    const MAX_TRIAGE_LEADS: usize = 20;
+
+    let mut ranked: Vec<_> = findings.iter().collect();
+    ranked.sort_by(|a, b| {
+        super::severity_weight(&b.severity)
+            .cmp(&super::severity_weight(&a.severity))
+            .then(a.line_number.cmp(&b.line_number))
+    });
+    let total = ranked.len();
+    ranked.truncate(MAX_TRIAGE_LEADS);
+
     let mut out = String::new();
-    for (i, f) in findings.iter().enumerate() {
+    for (i, f) in ranked.iter().enumerate() {
         out.push_str(&format!(
             "{}. [{}] {} — {}\n   File: {}:{}\n   Remediation: {}\n\n",
             i + 1,
@@ -510,6 +542,12 @@ pub fn format_triage_context(findings: &[super::SecurityFinding]) -> String {
             f.file_path.display(),
             f.line_number,
             f.remediation,
+        ));
+    }
+    if total > MAX_TRIAGE_LEADS {
+        out.push_str(&format!(
+            "({} additional lower-priority findings omitted)\n",
+            total - MAX_TRIAGE_LEADS,
         ));
     }
     out
