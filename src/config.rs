@@ -10,6 +10,8 @@ pub struct Config {
     pub social: SocialConfig,
     #[serde(default)]
     pub defi_llama: DefiLlamaConfig,
+    #[serde(default)]
+    pub discovery: DiscoveryConfig,
     pub llm: LlmConfig,
     #[serde(default)]
     pub models: Option<ModelsConfig>,
@@ -110,6 +112,23 @@ pub struct DefiLlamaConfig {
     pub top_protocols: usize,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct DiscoveryConfig {
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    #[serde(default = "default_max_signals")]
+    pub max_signals: usize,
+}
+
+impl Default for DiscoveryConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            max_signals: 15,
+        }
+    }
+}
+
 impl Default for DefiLlamaConfig {
     fn default() -> Self {
         Self {
@@ -146,6 +165,7 @@ pub struct ModelConfig {
 #[derive(Debug, Deserialize)]
 pub struct ModelsConfig {
     pub narrative: Option<ModelConfig>,
+    pub discovery: Option<ModelConfig>,
     pub investigation: Option<ModelConfig>,
     pub validation: Option<ModelConfig>,
     pub cross_reference: Option<ModelConfig>,
@@ -205,6 +225,12 @@ fn default_defi_llama_enabled() -> bool {
 fn default_top_protocols() -> usize {
     10
 }
+fn default_true() -> bool {
+    true
+}
+fn default_max_signals() -> usize {
+    15
+}
 fn default_model() -> String {
     "arcee-ai/trinity-large-preview:free".into()
 }
@@ -237,6 +263,7 @@ impl Default for Config {
             },
             social: SocialConfig::default(),
             defi_llama: DefiLlamaConfig::default(),
+            discovery: DiscoveryConfig::default(),
             llm: LlmConfig {
                 provider: crate::llm::Provider::default(),
                 model: default_model(),

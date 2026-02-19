@@ -84,6 +84,13 @@ cargo run -- render -n narratives.json -f findings.json -o report.html  # offlin
 | `narratives` | `GITHUB_TOKEN` + `GROQ_API_KEY` (or configured LLM provider) |
 | `run` | `GITHUB_TOKEN` + `GROQ_API_KEY` + `OPENROUTER_API_KEY` |
 
+## Reproduction Notes
+
+- The [live report](https://ampactor.github.io/st-solguard) was generated with the `claudecode` provider (Claude Opus via local `claude` CLI) for all LLM tasks — narrative synthesis, deep investigation, validation, and cross-reference
+- `claudecode` provider: subscription-based, no per-token cost. Requires `claude` CLI installed and authenticated. Each deep scan spawns a `claude -p` subprocess
+- Alternative: switch `config.toml` to `provider = "groq"` / `"openrouter"` / `"anthropic"` for API-based inference. Uncomment `[models]` section for per-task routing
+- `scan` subcommand without `--deep` runs deterministic static analysis only (no LLM, no API key)
+
 ## Tech Stack
 
 | Component | Crate | Purpose |

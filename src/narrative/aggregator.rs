@@ -16,7 +16,13 @@ fn normalize_category(raw: &str) -> String {
     match raw {
         "DeFi TVL" | "Dexes" | "DEX" | "Lending" | "Yield" | "Yield Aggregator" => "DeFi".into(),
         "Liquid Staking" | "Staking" => "Staking".into(),
-        "NFT" | "NFT Marketplace" | "NFT Lending" => "NFT & Gaming".into(),
+        "NFT" | "NFT Marketplace" | "NFT Lending" | "NFT & Gaming" => "NFT & Gaming".into(),
+        "DePIN" | "IoT" | "DePin" => "DePIN".into(),
+        "AI & Agents" | "AI" | "Agents" => "AI & Agents".into(),
+        "Infrastructure" | "Infra" | "Developer Tooling" => "Infrastructure".into(),
+        "Payments" | "Remittances" => "Payments".into(),
+        "Security" => "Security".into(),
+        "Governance" | "DAO" => "Governance".into(),
         other => other.to_string(),
     }
 }

@@ -46,7 +46,7 @@ pub async fn run_full_pipeline(
     // Phase 1: Narrative detection
     info!("Phase 1: Detecting narratives...");
     let mut narratives =
-        narrative::run_narrative_pipeline(&config_path, llm_override.as_ref()).await?;
+        narrative::run_narrative_pipeline(&config_path, llm_override.as_ref(), &router).await?;
     info!(count = narratives.len(), "narratives detected");
 
     // Phase 2: Target selection from narratives
@@ -232,11 +232,14 @@ pub async fn run_full_pipeline(
 
         match result {
             Ok(mut findings) => {
-                // Validate findings for this repo
                 let mut repo_errors = Vec::new();
-                if deep && !findings.is_empty() {
+                let is_program = security::is_solana_project(&repo_path);
+                let mut validated = false;
+
+                // Only validate Solana program repos in deep mode
+                if deep && !findings.is_empty() && is_program {
                     info!(repo = %target, count = findings.len(), "validating findings");
-                    if let Err(e) = security::validator::validate_findings(
+                    match security::validator::validate_findings(
                         &mut findings,
                         &router,
                         &repo_path,
@@ -244,13 +247,27 @@ pub async fn run_full_pipeline(
                     )
                     .await
                     {
-                        repo_errors.push(format!("validation: {e}"));
-                        tracing::warn!(
-                            repo = %target, error = %e,
-                            "validation failed, keeping unvalidated"
-                        );
+                        Ok(()) => validated = true,
+                        Err(e) => {
+                            repo_errors.push(format!("validation: {e}"));
+                            tracing::warn!(
+                                repo = %target, error = %e,
+                                "validation failed, keeping unvalidated"
+                            );
+                        }
                     }
                 }
+
+                // Cap unvalidated findings to prevent report pollution
+                if !validated && findings.len() > 50 {
+                    findings.sort_by(|a, b| {
+                        security::severity_weight(&b.severity)
+                            .cmp(&security::severity_weight(&a.severity))
+                    });
+                    findings.truncate(50);
+                    tracing::warn!(repo = %target, "capped unvalidated findings at 50");
+                }
+
                 let count = findings.len();
                 info!(repo = %target, findings = count, "scan complete");
                 all_findings.extend(findings);

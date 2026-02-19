@@ -186,6 +186,22 @@ fn group_findings(findings: Vec<FindingView>) -> Vec<GroupedFinding> {
     groups
 }
 
+const MAX_GROUPS_PER_REPO: usize = 30;
+
+/// Cap grouped findings so no single repo dominates the report.
+fn cap_groups_per_repo(groups: Vec<GroupedFinding>) -> Vec<GroupedFinding> {
+    let mut repo_counts: BTreeMap<String, usize> = BTreeMap::new();
+    // Groups are already sorted by severity — keeps highest-severity groups per repo.
+    groups
+        .into_iter()
+        .filter(|g| {
+            let count = repo_counts.entry(g.repo.clone()).or_insert(0);
+            *count += 1;
+            *count <= MAX_GROUPS_PER_REPO
+        })
+        .collect()
+}
+
 pub fn render_combined_report(
     narratives: &[Narrative],
     findings: &[SecurityFinding],
@@ -249,7 +265,7 @@ pub fn render_combined_report(
                 risk_score_fmt: format!("{:.1}", n.risk_score),
                 risk_level: rl.to_string(),
                 risk_class: risk_class(rl),
-                grouped_findings: group_findings(linked),
+                grouped_findings: cap_groups_per_repo(group_findings(linked)),
                 repo_context,
             }
         })
@@ -279,7 +295,7 @@ pub fn render_combined_report(
         })
         .collect();
     let orphan_count = orphan_views.len();
-    let orphan_groups = group_findings(orphan_views);
+    let orphan_groups = cap_groups_per_repo(group_findings(orphan_views));
 
     // Severity counts
     let severity_critical = findings.iter().filter(|f| f.severity == "Critical").count();

@@ -1,6 +1,8 @@
 mod aggregator;
 mod defi_llama;
+mod discovery;
 mod github;
+#[allow(dead_code)]
 mod social;
 mod solana_rpc;
 mod synthesizer;
@@ -9,7 +11,7 @@ mod types;
 use crate::LlmOverride;
 use crate::config::Config;
 use crate::http::HttpClient;
-use crate::llm::LlmClient;
+use crate::llm::{ModelRouter, TaskKind};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -36,6 +38,7 @@ pub struct Narrative {
 pub async fn run_narrative_pipeline(
     config_path: &Path,
     llm_override: Option<&LlmOverride>,
+    router: &ModelRouter,
 ) -> Result<Vec<Narrative>> {
     info!("narrative pipeline: starting");
 
@@ -49,16 +52,25 @@ pub async fn run_narrative_pipeline(
 
     let http = HttpClient::new("st-solguard/0.1.0").map_err(|e| anyhow::anyhow!("{e}"))?;
 
-    // Collect signals from all sources in parallel
-    let (github_result, solana_result, social_result, defi_llama_result) = tokio::join!(
+    // Collect signals from all sources in parallel — discovery replaces social
+    let discovery_llm = router.client_for(TaskKind::NarrativeDiscovery);
+    let (discovery_result, github_result, solana_result, defi_llama_result) = tokio::join!(
+        discovery::discover(discovery_llm, &config.discovery),
         github::collect(&config.github, &http),
         solana_rpc::collect(&config.solana, &http),
-        social::collect(&config.social, &http),
         defi_llama::collect(&config.defi_llama, &http),
     );
 
     let mut signals = Vec::new();
     let mut discovered_repos = Vec::new();
+
+    match discovery_result {
+        Ok(sigs) => {
+            info!(count = sigs.len(), "discovery signals collected");
+            signals.extend(sigs);
+        }
+        Err(e) => tracing::warn!(error = %e, "discovery signal collection failed"),
+    }
 
     match github_result {
         Ok(data) => {
@@ -71,11 +83,6 @@ pub async fn run_narrative_pipeline(
     match solana_result {
         Ok(sigs) => signals.extend(sigs),
         Err(e) => tracing::warn!(error = %e, "Solana RPC signal collection failed"),
-    }
-
-    match social_result {
-        Ok(sigs) => signals.extend(sigs),
-        Err(e) => tracing::warn!(error = %e, "Social signal collection failed"),
     }
 
     match defi_llama_result {
@@ -99,16 +106,9 @@ pub async fn run_narrative_pipeline(
     let signals_json = aggregator::signals_to_json(&signals, &groups, &discovered_repos);
 
     // Synthesize narratives via LLM
-    let llm = LlmClient::from_config(
-        config.llm.provider,
-        config.llm.model,
-        config.llm.max_tokens,
-        config.llm.api_key_env,
-        config.llm.base_url,
-    )
-    .map_err(|e| anyhow::anyhow!("{e}"))?;
+    let synth_llm = router.client_for(TaskKind::NarrativeSynthesis);
 
-    let synthesized = synthesizer::identify_narratives(&llm, &signals_json)
+    let synthesized = synthesizer::identify_narratives(synth_llm, &signals_json)
         .await
         .map_err(|e| anyhow::anyhow!("{e}"))?;
 

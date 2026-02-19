@@ -18,6 +18,7 @@ pub enum SignalSource {
     SolanaOnchain,
     Social,
     DeFiLlama,
+    Discovery,
 }
 
 impl std::fmt::Display for SignalSource {
@@ -27,6 +28,7 @@ impl std::fmt::Display for SignalSource {
             Self::SolanaOnchain => write!(f, "Solana Onchain"),
             Self::Social => write!(f, "Social"),
             Self::DeFiLlama => write!(f, "DeFiLlama"),
+            Self::Discovery => write!(f, "Discovery"),
         }
     }
 }

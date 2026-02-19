@@ -86,7 +86,7 @@ impl SolanaVisitor {
                         code_snippet: self.snippet_at(line),
                         remediation: "Add `/// CHECK: <reason>` or use a validated account type."
                             .into(),
-                        confidence: 0.7,
+                        confidence: 0.80,
                         references: vec![],
                     });
                 }
@@ -96,24 +96,6 @@ impl SolanaVisitor {
 
     fn check_function_body(&mut self, func: &ItemFn) {
         let body_str = quote::quote!(#func).to_string();
-
-        if body_str.contains("msg !") && body_str.contains("key ()") {
-            let line = self.line_of(func.sig.ident.span());
-            self.findings.push(Finding {
-                pattern_id: "AST-002".into(),
-                title: "Verbose Error Logging May Leak Account Keys".into(),
-                description:
-                    "Function logs account keys via msg!(). This may leak sensitive information."
-                        .into(),
-                severity: Severity::Low,
-                file_path: self.file_path.clone(),
-                line_number: line,
-                code_snippet: self.snippet_at(line),
-                remediation: "Use error codes instead of logging raw keys.".into(),
-                confidence: 0.5,
-                references: vec![],
-            });
-        }
 
         if body_str.contains("unsafe") {
             let line = self.line_of(func.sig.ident.span());
@@ -129,7 +111,7 @@ impl SolanaVisitor {
                 code_snippet: self.snippet_at(line),
                 remediation: "Review unsafe block for soundness. Consider safe alternatives."
                     .into(),
-                confidence: 0.8,
+                confidence: 0.85,
                 references: vec!["CWE-119".into()],
             });
         }
@@ -189,22 +171,6 @@ pub struct MyAccounts<'info> {
         assert!(
             !findings.iter().any(|f| f.pattern_id == "AST-001"),
             "unexpected AST-001 finding: {findings:?}"
-        );
-    }
-
-    #[test]
-    fn ast_002_positive() {
-        let code = r#"
-fn log_stuff() {
-    msg!("{}", account.key());
-}
-"#;
-        let findings = scan(code, Path::new("test.rs")).unwrap();
-        assert!(
-            findings
-                .iter()
-                .any(|f| f.pattern_id == "AST-002" && f.severity == Severity::Low),
-            "expected AST-002 Low finding, got: {findings:?}"
         );
     }
 
