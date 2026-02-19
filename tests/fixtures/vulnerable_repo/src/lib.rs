@@ -38,7 +38,7 @@ pub fn create_pda(program_id: &Pubkey) {
 
 // SOL-006: Account closed without zeroing
 pub fn close_account(account: &AccountInfo) {
-    **account.lamports.borrow_mut() = 0;
+    account.sub_lamports(1000).unwrap();
 }
 
 // SOL-007: Arbitrary CPI target

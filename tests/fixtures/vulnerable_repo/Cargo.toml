@@ -1,0 +1,8 @@
+[package]
+name = "vulnerable-fixture"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anchor-lang = "0.30"
+solana-program = "1.18"

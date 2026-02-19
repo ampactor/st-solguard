@@ -3,7 +3,16 @@ use crate::http::HttpClient;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::collections::HashMap;
+use std::path::Path;
 use tracing::{debug, warn};
+
+/// Per-call context for provider-specific behavior.
+///
+/// Non-API providers (ClaudeCode) use this to set CWD and scope tool access.
+/// API providers ignore it.
+pub struct ConverseContext<'a> {
+    pub repo_path: &'a Path,
+}
 
 /// LLM provider — determines API format and endpoint.
 #[derive(Debug, Clone, Deserialize, Default)]
@@ -396,6 +405,7 @@ impl LlmClient {
         system: &str,
         messages: &[ConversationMessage],
         tools: &[ToolDef],
+        context: Option<&ConverseContext<'_>>,
     ) -> Result<ConversationResponse> {
         debug!(
             provider = ?self.provider,
@@ -408,7 +418,10 @@ impl LlmClient {
             Provider::OpenRouter | Provider::OpenAi | Provider::Groq => {
                 self.converse_openai(system, messages, tools).await
             }
-            Provider::ClaudeCode => self.converse_claudecode(system, messages, tools).await,
+            Provider::ClaudeCode => {
+                self.converse_claudecode(system, messages, tools, context)
+                    .await
+            }
         }
     }
 
@@ -643,10 +656,12 @@ impl LlmClient {
     // -- Claude Code CLI subprocess --
 
     async fn complete_claudecode(&self, system: &str, user_message: &str) -> Result<String> {
-        let output = tokio::process::Command::new("claude")
+        use tokio::io::AsyncWriteExt;
+
+        let mut child = tokio::process::Command::new("claude")
             .args([
                 "-p",
-                user_message,
+                "-",
                 "--model",
                 &self.model,
                 "--output-format",
@@ -655,9 +670,21 @@ impl LlmClient {
                 system,
             ])
             .env_remove("CLAUDECODE")
-            .output()
-            .await
+            .stdin(std::process::Stdio::piped())
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
             .map_err(|e| Error::config(format!("claude CLI not found or failed to start: {e}")))?;
+
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin.write_all(user_message.as_bytes()).await.ok();
+            drop(stdin);
+        }
+
+        let output = child
+            .wait_with_output()
+            .await
+            .map_err(|e| Error::config(format!("claude CLI wait failed: {e}")))?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
@@ -677,26 +704,57 @@ impl LlmClient {
         system: &str,
         messages: &[ConversationMessage],
         _tools: &[ToolDef],
+        context: Option<&ConverseContext<'_>>,
     ) -> Result<ConversationResponse> {
+        use tokio::io::AsyncWriteExt;
+
         let prompt = Self::format_claudecode_prompt(messages);
 
-        let output = tokio::process::Command::new("claude")
-            .args([
-                "-p",
-                &prompt,
-                "--model",
-                &self.model,
-                "--output-format",
-                "json",
-                "--append-system-prompt",
-                system,
-                "--allowedTools",
-                "Read,Grep,Glob,Bash",
-            ])
-            .env_remove("CLAUDECODE")
-            .output()
-            .await
+        // Append tool-mapping note so the CLI agent uses Read/Grep/Glob
+        // instead of the custom API tools referenced in the system prompt.
+        let augmented_system = format!(
+            "{system}\n\n\
+             Available tools: Read (view files), Grep (search code), Glob (find files).\n\
+             Do NOT reference list_files, read_file, search_code, get_file_structure — \
+             use Read, Grep, Glob instead."
+        );
+
+        let mut cmd = tokio::process::Command::new("claude");
+        cmd.args([
+            "-p",
+            "-",
+            "--model",
+            &self.model,
+            "--output-format",
+            "json",
+            "--append-system-prompt",
+            &augmented_system,
+            "--allowedTools",
+            "Read,Grep,Glob",
+        ])
+        .env_remove("CLAUDECODE")
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+
+        // Set CWD to target repo so Read/Grep/Glob resolve paths naturally.
+        if let Some(ctx) = context {
+            cmd.current_dir(ctx.repo_path);
+        }
+
+        let mut child = cmd
+            .spawn()
             .map_err(|e| Error::config(format!("claude CLI: {e}")))?;
+
+        if let Some(mut stdin) = child.stdin.take() {
+            stdin.write_all(prompt.as_bytes()).await.ok();
+            drop(stdin);
+        }
+
+        let output = child
+            .wait_with_output()
+            .await
+            .map_err(|e| Error::config(format!("claude CLI wait: {e}")))?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
@@ -853,6 +911,8 @@ fn extract_json(text: &str) -> &str {
 pub enum TaskKind {
     /// Narrative synthesis: fast, structured JSON output.
     NarrativeSynthesis,
+    /// Autonomous web research for narrative discovery.
+    NarrativeDiscovery,
     /// Deep security investigation: best reasoning, code analysis.
     DeepInvestigation,
     /// Adversarial finding validation.

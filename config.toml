@@ -52,7 +52,7 @@ source_type = "blog"
 
 [[social.sources]]
 name = "Phantom Blog"
-url = "https://phantom.app/blog"
+url = "https://phantom.com/blog"
 source_type = "blog"
 
 [[social.sources]]
@@ -63,6 +63,10 @@ source_type = "blog"
 [defi_llama]
 enabled = true
 top_protocols = 10
+
+[discovery]
+enabled = true
+# max_signals = 15
 
 [llm]
 provider = "claudecode"

@@ -6,7 +6,15 @@ use tracing::info;
 
 const SYSTEM_PROMPT: &str = r#"You are a Solana ecosystem analyst for SolGuard, identifying emerging narratives that connect growth trends with security posture.
 
-A "narrative" is a thematic trend backed by multiple data points across different sources (GitHub developer activity, onchain metrics, social/blog signals). A narrative must appear in 2+ signal sources to be credible.
+A "narrative" is a thematic trend backed by multiple data points across different sources (GitHub developer activity, onchain metrics, DeFiLlama TVL data, Discovery web research). A narrative must appear in 2+ signal sources to be credible.
+
+Signal sources:
+- **GitHub**: Developer activity — new repos, star velocity, trending projects
+- **Solana Onchain**: Network metrics — TPS, epoch info, program activity
+- **DeFiLlama**: TVL, protocol metrics, chain-level DeFi activity
+- **Discovery**: Recent news, trends, and events found via autonomous web research
+
+Cross-validate Discovery signals against quantitative metrics from other sources. Discovery provides qualitative context; GitHub/Onchain/DeFiLlama provide hard numbers.
 
 For each narrative you identify, provide:
 1. A clear, specific title — name the protocols, tools, or repos involved (not generic like "DeFi growth" — be specific: "Concentrated Liquidity Migration on Orca and Raydium")

@@ -7,8 +7,8 @@ use super::ValidationStatus;
 use super::agent_review::AgentFinding;
 use crate::config::AgentReviewConfig;
 use crate::llm::{
-    ContentBlock, ConversationMessage, LlmClient, ModelRouter, Role, StopReason, TaskKind,
-    estimate_cost_usd,
+    ContentBlock, ConversationMessage, ConverseContext, LlmClient, ModelRouter, Role, StopReason,
+    TaskKind, estimate_cost_usd,
 };
 use crate::security::agent_tools;
 use anyhow::Result;
@@ -94,17 +94,18 @@ pub async fn validate(
         })
         .collect::<Vec<_>>()
         .join("\n");
+    let repo_abs = repo_path
+        .canonicalize()
+        .unwrap_or_else(|_| repo_path.to_path_buf());
     let initial_msg = format!(
-        "Review the following {} security finding(s) against the repository at '{}'.\n\n\
-         For each finding, use the tools to read the cited code and determine whether \
+        "Review the following {} security finding(s) against the repository at `{}`.\n\
+         Use Read, Grep, Glob to verify cited code before rendering verdict.\n\n\
+         For each finding, read the cited code and determine whether \
          the vulnerability is real, overstated, or a false positive.\n\
          Include the finding index (e.g. #0, #1) in your verdict for reliable matching.\n\n\
          {indexed_findings}",
         findings.len(),
-        repo_path
-            .file_name()
-            .map(|n| n.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "unknown".into()),
+        repo_abs.display(),
     );
 
     messages.push(ConversationMessage {
@@ -119,6 +120,8 @@ pub async fn validate(
         "starting validator pass"
     );
 
+    let ctx = ConverseContext { repo_path };
+
     // Conversation loop — mirrors investigate() in agent_review.rs.
     loop {
         if turns >= max_turns {
@@ -130,7 +133,10 @@ pub async fn validate(
             break;
         }
 
-        let response = match llm.converse(VALIDATOR_PROMPT, &messages, &tools).await {
+        let response = match llm
+            .converse(VALIDATOR_PROMPT, &messages, &tools, Some(&ctx))
+            .await
+        {
             Ok(r) => r,
             Err(e) => {
                 warn!(error = %e, "validator converse failed");
@@ -206,7 +212,10 @@ pub async fn validate(
                     .into(),
             }],
         });
-        if let Ok(response) = llm.converse(VALIDATOR_PROMPT, &messages, &[]).await {
+        if let Ok(response) = llm
+            .converse(VALIDATOR_PROMPT, &messages, &[], Some(&ctx))
+            .await
+        {
             let cost = estimate_cost_usd(&response.usage, llm.model());
             total_cost_usd += cost;
             turns += 1;
@@ -268,33 +277,25 @@ pub async fn validate(
     Ok(validated)
 }
 
-/// Validate findings in-place using the ModelRouter, then filter/downgrade.
-///
-/// - Annotates each `SecurityFinding` with `ValidationStatus` and `validation_reasoning`
-/// - Removes findings with `Dismissed` status
-/// - Downgrades severity by one level for `Disputed` findings
-pub async fn validate_findings(
-    findings: &mut Vec<SecurityFinding>,
-    router: &ModelRouter,
-    repo_path: &Path,
-    config: &AgentReviewConfig,
-) -> Result<()> {
-    if findings.is_empty() {
-        return Ok(());
-    }
+const VALIDATION_BATCH_SIZE: usize = 20;
 
-    let llm = router.client_for(TaskKind::Validation);
+/// Run one validation conversation on a batch of findings.
+///
+/// `batch` carries `(original_index, finding_ref)` so verdicts use global indices.
+async fn validate_batch(
+    llm: &LlmClient,
+    repo_path: &Path,
+    batch: &[(usize, &SecurityFinding)],
+    config: &AgentReviewConfig,
+) -> Vec<VerdictEntry> {
     let tools = agent_tools::tool_definitions();
     let mut messages: Vec<ConversationMessage> = Vec::new();
     let mut turns: u32 = 0;
     let mut total_cost_usd: f64 = 0.0;
-    // Validator gets 30% of investigator budget, capped at 5 turns
     let max_turns = (config.max_turns * 30 / 100).clamp(2, 5);
 
-    // Build initial user message with indexed findings.
-    let indexed_findings: String = findings
+    let indexed_findings: String = batch
         .iter()
-        .enumerate()
         .map(|(i, f)| {
             format!(
                 "Finding #{i}: {}",
@@ -303,17 +304,19 @@ pub async fn validate_findings(
         })
         .collect::<Vec<_>>()
         .join("\n");
+
+    let repo_abs = repo_path
+        .canonicalize()
+        .unwrap_or_else(|_| repo_path.to_path_buf());
     let initial_msg = format!(
-        "Review the following {} security finding(s) against the repository at '{}'.\n\n\
-         For each finding, use the tools to read the cited code and determine whether \
+        "Review the following {} security finding(s) against the repository at `{}`.\n\
+         Use Read, Grep, Glob to verify cited code before rendering verdict.\n\n\
+         For each finding, read the cited code and determine whether \
          the vulnerability is real, overstated, or a false positive.\n\
          Include the finding index (e.g. #0, #1) in your verdict for reliable matching.\n\n\
          {indexed_findings}",
-        findings.len(),
-        repo_path
-            .file_name()
-            .map(|n| n.to_string_lossy().into_owned())
-            .unwrap_or_else(|| "unknown".into()),
+        batch.len(),
+        repo_abs.display(),
     );
 
     messages.push(ConversationMessage {
@@ -321,45 +324,26 @@ pub async fn validate_findings(
         content: vec![ContentBlock::Text { text: initial_msg }],
     });
 
-    info!(
-        findings = findings.len(),
-        max_turns,
-        cost_limit = config.cost_limit_usd,
-        "starting validate_findings pass"
-    );
+    let ctx = ConverseContext { repo_path };
 
-    // Conversation loop — mirrors the existing validate() logic.
     loop {
-        if turns >= max_turns {
-            warn!(turns, "validate_findings hit max turns");
-            break;
-        }
-        if total_cost_usd >= config.cost_limit_usd {
-            warn!(cost = total_cost_usd, "validate_findings hit cost limit");
+        if turns >= max_turns || total_cost_usd >= config.cost_limit_usd {
             break;
         }
 
-        let response = match llm.converse(VALIDATOR_PROMPT, &messages, &tools).await {
+        let response = match llm
+            .converse(VALIDATOR_PROMPT, &messages, &tools, Some(&ctx))
+            .await
+        {
             Ok(r) => r,
             Err(e) => {
-                warn!(error = %e, "validate_findings converse failed");
-                if turns > 0 {
-                    break;
-                }
-                return Err(e.into());
+                warn!(error = %e, "validate_batch converse failed");
+                break;
             }
         };
 
         turns += 1;
-        let cost = estimate_cost_usd(&response.usage, llm.model());
-        total_cost_usd += cost;
-
-        debug!(
-            turn = turns,
-            stop = ?response.stop_reason,
-            cost = format!("${:.4}", total_cost_usd),
-            "validate_findings turn"
-        );
+        total_cost_usd += estimate_cost_usd(&response.usage, llm.model());
 
         let tool_uses: Vec<_> = response
             .content
@@ -378,13 +362,11 @@ pub async fn validate_findings(
         });
 
         if response.stop_reason == StopReason::EndTurn || tool_uses.is_empty() {
-            debug!("validate_findings finished, extracting verdicts");
             break;
         }
 
         let mut tool_results = Vec::new();
         for (id, name, input) in &tool_uses {
-            debug!(tool = %name, "validate_findings executing tool");
             let (result, is_error) = agent_tools::dispatch(repo_path, name, input);
             tool_results.push(ContentBlock::ToolResult {
                 tool_use_id: id.clone(),
@@ -401,9 +383,7 @@ pub async fn validate_findings(
 
     let mut verdicts = extract_verdicts(&messages);
 
-    // Force a summary turn if no verdicts extracted.
     if verdicts.is_empty() {
-        info!("no verdicts extracted in validate_findings, forcing summary turn");
         messages.push(ConversationMessage {
             role: Role::User,
             content: vec![ContentBlock::Text {
@@ -413,10 +393,10 @@ pub async fn validate_findings(
                     .into(),
             }],
         });
-        if let Ok(response) = llm.converse(VALIDATOR_PROMPT, &messages, &[]).await {
-            let cost = estimate_cost_usd(&response.usage, llm.model());
-            total_cost_usd += cost;
-            turns += 1;
+        if let Ok(response) = llm
+            .converse(VALIDATOR_PROMPT, &messages, &[], Some(&ctx))
+            .await
+        {
             messages.push(ConversationMessage {
                 role: Role::Assistant,
                 content: response.content,
@@ -425,15 +405,65 @@ pub async fn validate_findings(
         }
     }
 
+    verdicts
+}
+
+/// Validate findings in-place using the ModelRouter, then filter/downgrade.
+///
+/// - Batches findings into groups of 20 to prevent context overflow
+/// - Annotates each `SecurityFinding` with `ValidationStatus` and `validation_reasoning`
+/// - Removes findings with `Dismissed` status
+/// - Downgrades severity by one level for `Disputed` findings
+pub async fn validate_findings(
+    findings: &mut Vec<SecurityFinding>,
+    router: &ModelRouter,
+    repo_path: &Path,
+    config: &AgentReviewConfig,
+) -> Result<()> {
+    if findings.is_empty() {
+        return Ok(());
+    }
+
+    let llm = router.client_for(TaskKind::Validation);
+    let batch_count = findings.len().div_ceil(VALIDATION_BATCH_SIZE);
+
+    info!(
+        findings = findings.len(),
+        batches = batch_count,
+        "starting validate_findings pass"
+    );
+
+    // Build indexed references preserving original indices
+    let indexed: Vec<(usize, &SecurityFinding)> = findings.iter().enumerate().collect();
+
+    let mut all_verdicts: Vec<VerdictEntry> = Vec::new();
+    for (batch_num, batch) in indexed.chunks(VALIDATION_BATCH_SIZE).enumerate() {
+        info!(
+            batch = batch_num + 1,
+            size = batch.len(),
+            "validating batch"
+        );
+        let verdicts = validate_batch(llm, repo_path, batch, config).await;
+        info!(
+            batch = batch_num + 1,
+            verdicts = verdicts.len(),
+            "batch complete"
+        );
+        all_verdicts.extend(verdicts);
+    }
+
     // Annotate findings in-place (index-first, fuzzy title fallback).
     for (i, finding) in findings.iter_mut().enumerate() {
-        let matched = verdicts.iter().find(|v| v.index == Some(i)).or_else(|| {
-            verdicts.iter().find(|v| {
-                let vt = v.title.to_lowercase();
-                let ft = finding.title.to_lowercase();
-                ft.contains(&vt) || vt.contains(&ft)
-            })
-        });
+        let matched = all_verdicts
+            .iter()
+            .find(|v| v.index == Some(i))
+            .or_else(|| {
+                all_verdicts.iter().find(|v| {
+                    let vt = v.title.to_lowercase();
+                    let ft = finding.title.to_lowercase();
+                    ft.contains(&vt) || vt.contains(&ft)
+                })
+            });
 
         match matched {
             Some(v) => {
@@ -463,8 +493,6 @@ pub async fn validate_findings(
 
     info!(
         remaining = findings.len(),
-        turns,
-        cost = format!("${:.4}", total_cost_usd),
         "validate_findings pass complete"
     );
 

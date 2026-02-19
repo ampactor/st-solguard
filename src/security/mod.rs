@@ -90,6 +90,17 @@ impl From<Finding> for SecurityFinding {
     }
 }
 
+/// Numeric weight for severity sorting (higher = more severe).
+pub fn severity_weight(severity: &str) -> u8 {
+    match severity {
+        "Critical" => 4,
+        "High" => 3,
+        "Medium" => 2,
+        "Low" => 1,
+        _ => 0,
+    }
+}
+
 /// Directories and file patterns that contain test/client/build code, not on-chain programs.
 const EXCLUDED_DIRS: &[&str] = &[
     "/target/",
@@ -114,6 +125,12 @@ const EXCLUDED_DIRS: &[&str] = &[
 
 /// File name suffixes that indicate test code.
 const EXCLUDED_SUFFIXES: &[&str] = &["_test.rs", "_tests.rs"];
+
+/// Minimum confidence required for a static finding to enter the LLM triage pipeline.
+///
+/// Patterns calibrated below this threshold (SOL-003, SOL-005) are too broad for
+/// actionable static detection — the agent catches real cases in context.
+const MIN_CONFIDENCE: f64 = 0.55;
 
 /// Scan a repository for vulnerabilities.
 pub async fn scan_repo(repo_path: &Path) -> Result<Vec<SecurityFinding>> {
@@ -179,6 +196,7 @@ pub async fn scan_repo(repo_path: &Path) -> Result<Vec<SecurityFinding>> {
 
     let findings: Vec<SecurityFinding> = all_findings
         .into_iter()
+        .filter(|f| f.confidence >= MIN_CONFIDENCE)
         .map(|f| {
             let mut sf = SecurityFinding::from(f);
             if !solana_project {
@@ -203,6 +221,13 @@ pub async fn scan_repo_deep(
 ) -> Result<Vec<SecurityFinding>> {
     // Run static scan first for triage context
     let static_findings = scan_repo(repo_path).await.unwrap_or_default();
+
+    // Skip agent review for non-Solana repos — static findings only
+    if !is_solana_project(repo_path) {
+        info!(path = %repo_path.display(), "non-Solana repo, skipping agent review");
+        return Ok(static_findings);
+    }
+
     let triage = if static_findings.is_empty() {
         None
     } else {
@@ -277,7 +302,7 @@ fn is_solana_cargo(content: &str) -> bool {
 ///
 /// Returns true if Anchor.toml exists at root, or any Cargo.toml in the tree
 /// declares `solana-program`, `anchor-lang`, or `pinocchio` as a dependency.
-fn is_solana_project(root: &Path) -> bool {
+pub fn is_solana_project(root: &Path) -> bool {
     if root.join("Anchor.toml").exists() {
         return true;
     }
